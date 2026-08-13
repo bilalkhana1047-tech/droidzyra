@@ -22,6 +22,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+export const dynamic = 'force-dynamic';
 export async function generateStaticParams() {
   const { apps } = await getApps({ limit: 100 });
 
@@ -282,3 +283,4 @@ export default async function VersionHistoryPage({
     </main>
   );
 }
+

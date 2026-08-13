@@ -23,6 +23,7 @@ import { AppIcon, VerificationBadge, SourceBadge } from '@/components/shared/bad
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+export const dynamic = 'force-dynamic';
 export async function generateStaticParams() {
   const { apps } = await getApps({ limit: 100 });
   const params: { slug: string; version: string }[] = [];
@@ -42,11 +43,52 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { app, version } = await getVersionDetail(params.slug, params.version);
   if (!app || !version) return { title: 'Version Not Found' };
+  const title = `${app.name} APK ${version.version_name} Download for Android`;
+
+  const description =
+    `Download ${app.name} APK version ${version.version_name} for Android. Check Android requirements, file size, architecture, release date and version details on DroidZyra.`;
+
   return {
-    title: `${app.name} v${version.version_name} — Version Details`,
-    description: `${app.name} version ${version.version_name} (code ${version.version_code}), released ${formatDate(version.release_date)}. Min Android ${version.min_android}, ${formatFileSize(version.file_size)}.`,
+    title,
+    description,
+    keywords: [
+      `${app.name} APK ${version.version_name}`,
+      `${app.name} APK download`,
+      `${app.name} latest APK`,
+      `${app.name} Android`,
+      `${app.name} version ${version.version_name}`,
+      app.developer,
+      "Android APK",
+      "APK download",
+      "DroidZyra",
+    ],
     alternates: {
       canonical: `/apps/${app.slug}/versions/${version.version_name}`,
+    },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: `/apps/${app.slug}/versions/${version.version_name}`,
+      siteName: "DroidZyra",
+      images: app.icon_url
+        ? [
+            {
+              url: app.icon_url,
+              alt: `${app.name} APK ${version.version_name}`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: app.icon_url ? [app.icon_url] : undefined,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -285,6 +327,20 @@ export default async function VersionDetailPage({
               </p>
             )}
 
+            {version.custom_download_url && (
+              <Button
+                asChild
+                variant="outline"
+                className="w-full gap-2 border-primary/20 bg-primary/[0.05] font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+              >
+                <a
+                  href={`/download/${app.slug}/${version.version_name}`}
+                >
+                  Download APK
+                </a>
+              </Button>
+            )}
+
             <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
               <Info className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
@@ -298,4 +354,6 @@ export default async function VersionDetailPage({
     </Container>
   );
 }
+
+
 

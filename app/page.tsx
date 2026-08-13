@@ -29,14 +29,16 @@ import { siteConfig } from '@/lib/site';
 import {
   getPopularApps,
   getRecentlyUpdatedApps,
+  getTrendingApps,
   getCategories,
   getApps,
 } from '@/lib/data';
 
 export default async function HomePage() {
-  const [{ apps }, popular, recent, categories] = await Promise.all([
+  const [{ apps }, popular, trending, recent, categories] = await Promise.all([
     getApps({ limit: 50 }),
     getPopularApps(6),
+    getTrendingApps(6),
     getRecentlyUpdatedApps(8),
     getCategories(),
   ]);
@@ -49,6 +51,8 @@ export default async function HomePage() {
         <TrustStrip />
 
         <PopularApps apps={popular} />
+
+        <TrendingApps apps={trending} />
 
         <CompatibilitySection apps={apps} />
 
@@ -252,6 +256,65 @@ function TrustStrip() {
    POPULAR APPS
 ========================================================= */
 
+function TrendingApps({
+  apps,
+}: {
+  apps: Awaited<ReturnType<typeof getTrendingApps>>;
+}) {
+  if (apps.length === 0) return null;
+
+  return (
+    <section className="relative overflow-hidden border-y border-border/50 bg-gradient-to-b from-orange-500/[0.025] via-background to-background py-16 sm:py-20 lg:py-24">
+      <div className="absolute right-[-120px] top-[-100px] -z-10 h-80 w-80 rounded-full bg-orange-500/[0.07] blur-3xl" />
+
+      <Container>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.07] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-orange-600">
+              <Zap className="h-3.5 w-3.5" />
+              Trending APKs
+            </div>
+
+            <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
+              Trending right now
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+              Apps currently getting attention, selected from trending searches
+              and updated DroidZyra records.
+            </p>
+          </div>
+
+          <Button
+            asChild
+            variant="ghost"
+            className="w-fit rounded-xl text-primary hover:text-primary"
+          >
+            <Link href="/apps">
+              Browse all apps
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {apps.map((app) => (
+            <div
+              key={app.id}
+              className="group relative rounded-[22px] border border-border/60 bg-background/90 p-1 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/20 hover:shadow-xl"
+            >
+              <div className="absolute right-4 top-4 z-10 rounded-full bg-orange-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                Trending
+              </div>
+
+              <AppCard app={app} />
+            </div>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}
 function PopularApps({
   apps,
 }: {
@@ -876,5 +939,7 @@ function SectionHeader({
     </div>
   );
 }
+
+
 
 

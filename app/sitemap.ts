@@ -35,12 +35,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${siteConfig.url}/ai`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
       url: `${siteConfig.url}/guides`,
       lastModified: now,
       changeFrequency: 'weekly',
@@ -107,6 +101,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const versionHistoryPages: MetadataRoute.Sitemap = apps.map((app) => ({
+    url: `${siteConfig.url}/apps/${app.slug}/versions`,
+    lastModified: new Date(app.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }));
+
   const versionPages: MetadataRoute.Sitemap = [];
 
   for (const app of apps) {
@@ -127,6 +128,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...categoryPages,
     ...guidePages,
     ...appPages,
+    ...versionHistoryPages,
     ...versionPages,
   ];
 }
+
+
+

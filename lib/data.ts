@@ -33,7 +33,7 @@ async function attachLatestVersions(apps: App[]): Promise<App[]> {
   const { data, error } = await supabase
     .from('versions')
     .select(
-      'id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, source_type, verified, created_at'
+      'id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url, source_type, verified, created_at'
     )
     .in('app_id', appIds)
     .order('release_date', { ascending: false });
@@ -553,3 +553,24 @@ export async function searchApps(
 }
 
 export { isSupabaseConfigured };
+
+export async function getTrendingApps(
+  limit = 6
+): Promise<App[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('apps')
+    .select('*, category:categories(*)')
+    .eq('status', 'active')
+    .eq('is_trending', true)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    console.error('Trending apps error:', error);
+    return [];
+  }
+
+  return attachLatestVersions((data as App[]) ?? []);
+}

@@ -26,7 +26,13 @@ type AppItem = {
   developer: string;
   package_name: string;
   icon_url: string | null;
+  description: string | null;
+  official_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  focus_keyword: string | null;
   status: string;
+  is_trending: boolean;
   updated_at: string;
 };
 
@@ -38,7 +44,11 @@ type AppForm = {
   description: string;
   icon_url: string;
   official_url: string;
+  seo_title: string;
+  seo_description: string;
+  focus_keyword: string;
   status: string;
+  is_trending: boolean;
 };
 type VersionItem = {
   id: string;
@@ -52,6 +62,7 @@ type VersionItem = {
   file_size: number;
   sha256: string | null;
   source_url: string | null;
+  custom_download_url: string | null;
 };
 
 type VersionForm = {
@@ -64,6 +75,7 @@ type VersionForm = {
   file_size: string;
   sha256: string;
   source_url: string;
+  custom_download_url: string;
 };
 
 const emptyVersion: VersionForm = {
@@ -76,6 +88,7 @@ const emptyVersion: VersionForm = {
   file_size: "",
   sha256: "",
   source_url: "",
+  custom_download_url: "",
 };
 
 function timeAgo(dateString?: string | null) {
@@ -112,7 +125,9 @@ const emptyApp: AppForm = {
   description: "",
   icon_url: "",
   official_url: "",
+  seo_title: "",   seo_description: "",   focus_keyword: "",
   status: "active",
+  is_trending: false,
 };
 
 export default function AdminPage() {
@@ -201,7 +216,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         supabase
           .from("apps")
           .select(
-            "id, name, slug, developer, package_name, icon_url, status, updated_at"
+            "id, name, slug, developer, package_name, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at"
           )
           .order("updated_at", { ascending: false })
           .limit(100),
@@ -314,7 +329,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         const { data, error } = await supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url"
+            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url"
           )
           .eq("app_id", app.id)
           .order("release_date", { ascending: false });
@@ -362,6 +377,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         file_size: String(version.file_size ?? ""),
         sha256: version.sha256 ?? "",
         source_url: version.source_url ?? "",
+        custom_download_url: version.custom_download_url ?? "",
       });
     
       setShowVersionForm(true);
@@ -417,6 +433,7 @@ const [versionLoading, setVersionLoading] = useState(false);
           file_size: Math.floor(fileSize),
           sha256: newVersion.sha256.trim() || null,
           source_url: newVersion.source_url.trim() || null,
+            custom_download_url: newVersion.custom_download_url.trim() || null,
         });
     
         if (error) {
@@ -480,6 +497,7 @@ const [versionLoading, setVersionLoading] = useState(false);
             file_size: Math.floor(fileSize),
             sha256: newVersion.sha256.trim() || null,
             source_url: newVersion.source_url.trim() || null,
+            custom_download_url: newVersion.custom_download_url.trim() || null,
           })
           .eq("id", editingVersionId)
           .eq("app_id", selectedAppForVersions.id);
@@ -587,10 +605,14 @@ const [versionLoading, setVersionLoading] = useState(false);
       slug: app.slug || "",
       developer: app.developer || "",
       package_name: app.package_name || "",
-      description: "",
-      icon_url: "",
-      official_url: "",
+      description: app.description ?? "",
+      icon_url: app.icon_url ?? "",
+      official_url: app.official_url ?? "",
+      seo_title: app.seo_title ?? "",
+      seo_description: app.seo_description ?? "",
+      focus_keyword: app.focus_keyword ?? "",
       status: app.status || "active",
+      is_trending: app.is_trending ?? false,
     });
 
     setShowAddApp(true);
@@ -632,7 +654,11 @@ const [versionLoading, setVersionLoading] = useState(false);
         description: newApp.description.trim() || null,
         icon_url: newApp.icon_url.trim() || null,
         official_url: newApp.official_url.trim() || null,
+          seo_title: newApp.seo_title.trim() || null,
+          seo_description: newApp.seo_description.trim() || null,
+          focus_keyword: newApp.focus_keyword.trim() || null,
         status: newApp.status,
+          is_trending: newApp.is_trending,
       });
 
       if (error) {
@@ -684,7 +710,11 @@ const [versionLoading, setVersionLoading] = useState(false);
           description: newApp.description.trim() || null,
           icon_url: newApp.icon_url.trim() || null,
           official_url: newApp.official_url.trim() || null,
+          seo_title: newApp.seo_title.trim() || null,
+          seo_description: newApp.seo_description.trim() || null,
+          focus_keyword: newApp.focus_keyword.trim() || null,
           status: newApp.status,
+          is_trending: newApp.is_trending,
           updated_at: new Date().toISOString(),
         })
         .eq("id", editingAppId);
@@ -1227,6 +1257,23 @@ const [versionLoading, setVersionLoading] = useState(false);
                     placeholder="https://example.com/download"
                   />
                 </div>
+
+                <div className="form-field full-width">
+                  <label>Custom Download URL</label>
+                  <input
+                    value={newVersion.custom_download_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        custom_download_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://your-download-link.com/file.apk"
+                  />
+                  <small className="form-help">
+                    Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
+                </div>
               </div>
 
               <div className="form-actions">
@@ -1464,6 +1511,45 @@ const [versionLoading, setVersionLoading] = useState(false);
               </div>
 
               <div className="form-field">
+                <label>Trending APK</label>
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    minHeight: "42px",
+                    padding: "0 12px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "10px",
+                    background: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={newApp.is_trending}
+                    onChange={(e) =>
+                      setNewApp({
+                        ...newApp,
+                        is_trending: e.target.checked,
+                      })
+                    }
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
+                    Show in Trending APKs
+                  </span>
+                </label>
+              </div>
+
+              <div className="form-field">
                 <label>Official URL</label>
 
                 <input
@@ -1506,6 +1592,49 @@ const [versionLoading, setVersionLoading] = useState(false);
                   }
                   placeholder="Application description..."
                   rows={4}
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>SEO Title</label>
+                <input
+                  value={newApp.seo_title}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      seo_title: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. WhatsApp APK Latest Version for Android"
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Meta Description</label>
+                <textarea
+                  value={newApp.seo_description}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      seo_description: e.target.value,
+                    })
+                  }
+                  placeholder="Short SEO description for Google results..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Focus Keyword</label>
+                <input
+                  value={newApp.focus_keyword}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      focus_keyword: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. WhatsApp APK latest version"
                 />
               </div>
             </div>
@@ -1993,6 +2122,23 @@ const [versionLoading, setVersionLoading] = useState(false);
                     placeholder="https://example.com/download"
                   />
                 </div>
+
+                <div className="form-field full-width">
+                  <label>Custom Download URL</label>
+                  <input
+                    value={newVersion.custom_download_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        custom_download_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://your-download-link.com/file.apk"
+                  />
+                  <small className="form-help">
+                    Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
+                </div>
               </div>
 
               <div className="form-actions">
@@ -2330,6 +2476,23 @@ const [versionLoading, setVersionLoading] = useState(false);
                     }
                     placeholder="https://example.com/download"
                   />
+                </div>
+
+                <div className="form-field full-width">
+                  <label>Custom Download URL</label>
+                  <input
+                    value={newVersion.custom_download_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        custom_download_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://your-download-link.com/file.apk"
+                  />
+                  <small className="form-help">
+                    Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
                 </div>
               </div>
 
@@ -2779,6 +2942,23 @@ const [versionLoading, setVersionLoading] = useState(false);
                     placeholder="https://example.com/download"
                   />
                 </div>
+
+                <div className="form-field full-width">
+                  <label>Custom Download URL</label>
+                  <input
+                    value={newVersion.custom_download_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        custom_download_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://your-download-link.com/file.apk"
+                  />
+                  <small className="form-help">
+                    Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
+                </div>
               </div>
 
               <div className="form-actions">
@@ -3123,6 +3303,23 @@ const [versionLoading, setVersionLoading] = useState(false);
                     }
                     placeholder="https://example.com/download"
                   />
+                </div>
+
+                <div className="form-field full-width">
+                  <label>Custom Download URL</label>
+                  <input
+                    value={newVersion.custom_download_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        custom_download_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://your-download-link.com/file.apk"
+                  />
+                  <small className="form-help">
+                    Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
                 </div>
               </div>
 
@@ -5077,6 +5274,17 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

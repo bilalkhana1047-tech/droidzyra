@@ -22,7 +22,11 @@ export interface App {
   category_id: string | null;
   icon_url: string | null;
   official_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  focus_keyword: string | null;
   status: AppStatus;
+  is_trending: boolean;
   created_at: string;
   updated_at: string;
   category?: Category | null;
@@ -42,6 +46,7 @@ export interface Version {
   file_size: number;
   sha256: string | null;
   source_url: string | null;
+  custom_download_url: string | null;
   source_type: SourceType;
   verified: boolean;
   created_at: string;
@@ -80,3 +85,6 @@ export interface AppDetail extends App {
   screenshots: Screenshot[];
   compatibility: CompatibilityRecord[];
 }
+
+
+

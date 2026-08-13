@@ -55,6 +55,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 
+export const dynamic = 'force-dynamic';
 export async function generateStaticParams() {
   const { apps } = await getApps({ limit: 1000 });
 
@@ -82,16 +83,22 @@ export async function generateMetadata({
 
   const latest = app.versions[0] ?? null;
 
-  const description =
+  const fallbackDescription =
     app.description ??
     `${app.name} by ${app.developer}. Explore the latest version, version history, Android compatibility, screenshots and trusted download sources on DroidZyra.`;
 
-  const cleanDescription = description
+  const cleanDescription = (
+    app.seo_description?.trim() || fallbackDescription
+  )
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 160);
 
-  const title = `${app.name} — Version History & Compatibility`;
+  const title =
+    app.seo_title?.trim() ||
+    `${app.name} — Version History & Compatibility`;
+
+  const focusKeyword = app.focus_keyword?.trim();
 
   return {
     title,
@@ -102,6 +109,7 @@ export async function generateMetadata({
     },
 
     keywords: [
+      ...(focusKeyword ? [focusKeyword] : []),
       app.name,
       `${app.name} APK`,
       `${app.name} latest version`,
@@ -118,7 +126,7 @@ export async function generateMetadata({
 
     openGraph: {
       type: 'website',
-      title: `${app.name} | DroidZyra`,
+      title,
       description: cleanDescription,
       url: `/apps/${app.slug}`,
       siteName: 'DroidZyra',
@@ -134,7 +142,7 @@ export async function generateMetadata({
 
     twitter: {
       card: 'summary_large_image',
-      title: `${app.name} | DroidZyra`,
+      title,
       description: cleanDescription,
       images: app.icon_url ? [app.icon_url] : undefined,
     },
@@ -1036,6 +1044,8 @@ function Section({
     </section>
   );
 }
+
+
 
 
 
