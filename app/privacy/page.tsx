@@ -11,31 +11,31 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <Container className="py-10 lg:py-16">
+    <Container className="relative py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-4xl">
-        <div className="text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="relative overflow-hidden rounded-[28px] border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-violet-500/[0.05] px-6 py-10 text-center shadow-[0_20px_60px_-38px_hsl(var(--primary)/0.30)] sm:px-10 sm:py-12">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm">
             <ShieldCheck className="h-7 w-7" />
           </div>
 
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-primary">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             Legal
           </p>
 
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
             Privacy Policy
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
             Your privacy matters to us. This page explains how DroidZyra
             handles information when you use our website.
           </p>
         </div>
 
-        <div className="mt-10 space-y-6">
-          <Card>
+        <div className="mt-8 space-y-5">
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">1. Information We Collect</h2>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">1. Information We Collect</h2>
               <p className="mt-3 leading-7 text-muted-foreground">
                 DroidZyra is designed primarily as an informational Android
                 app discovery platform. We may collect information that you
@@ -50,11 +50,11 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center gap-3">
                 <Database className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
                   2. How We Use Information
                 </h2>
               </div>
@@ -69,11 +69,11 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center gap-3">
                 <Cookie className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
                   3. Cookies and Advertising
                 </h2>
               </div>
@@ -98,9 +98,9 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 4. Third-Party Services
               </h2>
 
@@ -113,9 +113,9 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 5. External Links
               </h2>
 
@@ -129,9 +129,9 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">6. Data Security</h2>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">6. Data Security</h2>
 
               <p className="mt-3 leading-7 text-muted-foreground">
                 We take reasonable measures to protect information handled
@@ -142,9 +142,9 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">7. Children's Privacy</h2>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">7. Children's Privacy</h2>
 
               <p className="mt-3 leading-7 text-muted-foreground">
                 DroidZyra does not knowingly request or collect personal
@@ -155,9 +155,9 @@ export default function PrivacyPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 8. Changes to This Policy
               </h2>
 
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">9. Contact Us</h2>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">9. Contact Us</h2>
               </div>
 
               <p className="mt-3 leading-7 text-muted-foreground">
@@ -193,4 +193,5 @@ export default function PrivacyPage() {
     </Container>
   );
 }
+
 

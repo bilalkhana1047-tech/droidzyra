@@ -289,7 +289,7 @@ export default async function VersionDetailPage({
               <Info className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
                 DroidZyra does not host APK files. You will be directed to the
-                official source. Demo data uses example.com placeholders.
+                official source.
               </p>
             </div>
           </Card>
@@ -298,3 +298,4 @@ export default async function VersionDetailPage({
     </Container>
   );
 }
+

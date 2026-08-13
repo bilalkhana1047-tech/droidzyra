@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Eye,
   GitCompare,
-  Layers,
   PackageCheck,
   Search,
   ShieldCheck,
@@ -26,15 +25,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
-import { siteConfig, androidVersions } from '@/lib/site';
+import { siteConfig } from '@/lib/site';
 import {
   getPopularApps,
   getRecentlyUpdatedApps,
   getCategories,
+  getApps,
 } from '@/lib/data';
 
 export default async function HomePage() {
-  const [popular, recent, categories] = await Promise.all([
+  const [{ apps }, popular, recent, categories] = await Promise.all([
+    getApps({ limit: 50 }),
     getPopularApps(6),
     getRecentlyUpdatedApps(8),
     getCategories(),
@@ -49,7 +50,7 @@ export default async function HomePage() {
 
         <PopularApps apps={popular} />
 
-        <CompatibilitySection />
+        <CompatibilitySection apps={apps} />
 
         <RecentlyUpdated apps={recent} />
 
@@ -259,20 +260,50 @@ function PopularApps({
   if (apps.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
+      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-background via-primary/[0.025] to-background" />
+
+      <div className="absolute -left-40 top-20 -z-10 h-80 w-80 rounded-full bg-primary/[0.07] blur-3xl" />
+
+      <div className="absolute -right-40 bottom-0 -z-10 h-80 w-80 rounded-full bg-violet-500/[0.06] blur-3xl" />
+
       <Container>
         <SectionHeader
           eyebrow="DISCOVER"
           title="Popular Apps"
-          description="Explore apps people are checking out right now."
+          description="Explore popular Android apps and find the right version for your device."
           href="/apps"
           linkText="View all apps"
         />
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {apps.slice(0, 6).map((app) => (
-            <AppCard key={app.id} app={app} />
-          ))}
+        <div className="mt-9 rounded-[28px] border border-border/60 bg-background/70 p-4 shadow-[0_20px_70px_-40px_hsl(var(--primary)/0.35)] backdrop-blur-xl sm:p-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {apps.slice(0, 6).map((app) => (
+              <div
+                key={app.id}
+                className="group rounded-2xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <AppCard app={app} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            Verified metadata
+          </span>
+
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            Version history
+          </span>
+
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            Android requirements
+          </span>
         </div>
       </Container>
     </section>
@@ -283,7 +314,11 @@ function PopularApps({
    COMPATIBILITY
 ========================================================= */
 
-function CompatibilitySection() {
+function CompatibilitySection({
+  apps,
+}: {
+  apps: Awaited<ReturnType<typeof getApps>>['apps'];
+}) {
   return (
     <section className="relative overflow-hidden py-16 sm:py-20">
       <div className="absolute inset-0 -z-10 bg-muted/30" />
@@ -304,7 +339,9 @@ function CompatibilitySection() {
 
               <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
                 Will this app work
-                <span className="block text-primary">on your Android?</span>
+                <span className="block text-primary">
+                  on your Android?
+                </span>
               </h2>
 
               <p className="mt-4 max-w-lg leading-7 text-muted-foreground">
@@ -329,10 +366,7 @@ function CompatibilitySection() {
                 ))}
               </div>
 
-              <Button
-                asChild
-                className="mt-8 w-fit rounded-xl"
-              >
+              <Button asChild className="mt-8 w-fit rounded-xl">
                 <Link href="/compatibility">
                   Open Compatibility Finder
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -342,7 +376,7 @@ function CompatibilitySection() {
 
             <div className="border-t border-border/60 bg-background/50 p-5 sm:p-8 lg:border-l lg:border-t-0">
               <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-sm sm:p-6">
-                <CompatibilityFinderWidget />
+                <CompatibilityFinderWidget apps={apps} />
               </div>
             </div>
           </div>
@@ -364,20 +398,51 @@ function RecentlyUpdated({
   if (apps.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-20">
-      <Container>
-        <SectionHeader
-          eyebrow="LATEST"
-          title="Recently Updated"
-          description="Fresh app versions and the latest metadata."
-          href="/apps?sort=updated"
-          linkText="See updates"
-        />
+    <section className="relative overflow-hidden border-y border-border/50 bg-muted/20 py-16 sm:py-20 lg:py-24">
+      <div className="absolute right-[-120px] top-[-120px] -z-10 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl" />
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {apps.slice(0, 4).map((app) => (
-            <AppCard key={app.id} app={app} />
-          ))}
+      <Container>
+        <div className="rounded-[30px] border border-border/60 bg-background/80 p-5 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.22)] backdrop-blur sm:p-8">
+          <SectionHeader
+            eyebrow="LATEST UPDATES"
+            title="Recently Updated"
+            description="Stay up to date with fresh app versions, requirements and metadata."
+            href="/apps?sort=updated"
+            linkText="See all updates"
+          />
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {apps.slice(0, 4).map((app) => (
+              <div
+                key={app.id}
+                className="group relative transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute -top-2 right-3 z-10 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 shadow-sm">
+                  Updated
+                </div>
+
+                <AppCard app={app} />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-7 flex flex-col gap-3 border-t border-border/60 pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                Latest metadata
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                Android requirements
+              </span>
+            </div>
+
+            <span className="font-medium">
+              Updated app information at a glance
+            </span>
+          </div>
         </div>
       </Container>
     </section>
@@ -396,18 +461,49 @@ function CategoriesSection({
   if (categories.length === 0) return null;
 
   return (
-    <section className="border-y border-border/60 bg-muted/20 py-16 sm:py-20">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
+      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-background via-violet-500/[0.025] to-background" />
+
+      <div className="absolute left-[-120px] top-1/2 -z-10 h-80 w-80 -translate-y-1/2 rounded-full bg-fuchsia-500/[0.06] blur-3xl" />
+
       <Container>
         <SectionHeader
           eyebrow="EXPLORE"
           title="Browse by Category"
-          description="Find apps based on what you need."
+          description="Discover Android apps organized around what you need."
         />
 
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.slice(0, 6).map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
+        <div className="mt-9 rounded-[28px] border border-border/60 bg-background/75 p-5 shadow-[0_20px_60px_-38px_rgba(76,29,149,0.22)] backdrop-blur sm:p-7">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {categories.slice(0, 6).map((category, index) => (
+              <div
+                key={category.id}
+                className="group relative rounded-2xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  className={`absolute inset-x-4 top-0 h-1 rounded-full ${
+                    index % 6 === 0
+                      ? "bg-violet-500"
+                      : index % 6 === 1
+                        ? "bg-blue-500"
+                        : index % 6 === 2
+                          ? "bg-emerald-500"
+                          : index % 6 === 3
+                            ? "bg-amber-500"
+                            : index % 6 === 4
+                              ? "bg-pink-500"
+                              : "bg-cyan-500"
+                  }`}
+                />
+
+                <CategoryCard category={category} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 text-center text-xs text-muted-foreground">
+          Browse categories to quickly find apps that match your needs.
         </div>
       </Container>
     </section>
@@ -419,40 +515,37 @@ function CategoriesSection({
 ========================================================= */
 
 function HowItWorks() {
-  const steps: {
-    icon: LucideIcon;
-    number: string;
-    title: string;
-    desc: string;
-  }[] = [
+  const steps = [
     {
       number: '01',
       icon: Search,
       title: 'Search',
-      desc: 'Find an app by name, developer, package or category.',
+      desc: 'Find the Android app you are looking for.',
     },
     {
       number: '02',
       icon: GitCompare,
-      title: 'Compare',
-      desc: 'Explore versions, release dates, requirements and metadata.',
+      title: 'Compare Versions',
+      desc: 'Review version history, requirements and release details.',
     },
     {
       number: '03',
       icon: Smartphone,
-      title: 'Check',
-      desc: 'Match the app version against your Android version.',
+      title: 'Check Compatibility',
+      desc: 'See whether a version matches your Android device.',
     },
     {
       number: '04',
       icon: ShieldCheck,
-      title: 'Verify',
-      desc: 'Use trusted and authorized sources for downloads.',
+      title: 'Choose Safely',
+      desc: 'Use trusted source information and available verification details.',
     },
   ];
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="relative overflow-hidden border-y border-border/60 bg-muted/20 py-16 sm:py-20 lg:py-24">
+      <div className="absolute left-1/2 top-1/2 -z-10 h-[420px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.05] blur-3xl" />
+
       <Container>
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
@@ -460,41 +553,64 @@ function HowItWorks() {
           </p>
 
           <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-            Everything you need in four steps
+            Find the right app version
+            <span className="block bg-gradient-to-r from-primary via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
+              in four simple steps.
+            </span>
           </h2>
 
-          <p className="mt-4 text-muted-foreground">
-            DroidZyra makes finding the right Android app version simple.
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            DroidZyra helps you move from discovery to compatibility
+            information without unnecessary complexity.
           </p>
         </div>
 
-        <div className="relative mt-12 grid gap-5 md:grid-cols-4">
-          <div className="absolute left-[12%] right-[12%] top-10 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block" />
+        <div className="relative mt-12">
+          <div className="absolute left-[12%] right-[12%] top-10 hidden h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent lg:block" />
 
-          {steps.map((step) => (
-            <Card
-              key={step.number}
-              className="relative border-border/60 bg-background/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
-            >
-              <CardContent className="p-6">
-                <div className="relative flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className="group relative rounded-[24px] border border-border/60 bg-background/85 p-6 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-xl"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
                     <step.icon className="h-5 w-5" />
                   </div>
 
-                  <span className="text-xs font-black text-muted-foreground/50">
+                  <span className="text-3xl font-black tracking-tight text-primary/10 transition-colors group-hover:text-primary/20">
                     {step.number}
                   </span>
                 </div>
 
-                <h3 className="mt-6 font-bold">{step.title}</h3>
+                <div className="mt-6">
+                  <div className="mb-3 h-1 w-8 rounded-full bg-primary/60 transition-all duration-300 group-hover:w-14" />
 
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {step.desc}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+                  <h3 className="text-base font-bold tracking-tight text-foreground">
+                    {step.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 rounded-xl bg-background/70 px-5 shadow-sm backdrop-blur"
+          >
+            <Link href="/apps">
+              Start exploring
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </Container>
     </section>
@@ -508,21 +624,25 @@ function HowItWorks() {
 function TrustSection() {
   const items = [
     {
+      number: '01',
       icon: ShieldCheck,
       title: 'Official Sources',
       desc: 'We focus on official stores and authorized distribution channels.',
     },
     {
+      number: '02',
       icon: PackageCheck,
       title: 'Clear Verification',
       desc: 'Verification labels are based on available source data.',
     },
     {
+      number: '03',
       icon: Eye,
       title: 'Transparent Metadata',
       desc: 'Version codes, hashes and requirements are shown when available.',
     },
     {
+      number: '04',
       icon: Wifi,
       title: 'No Fake Numbers',
       desc: 'No fabricated ratings, reviews or download statistics.',
@@ -530,42 +650,83 @@ function TrustSection() {
   ];
 
   return (
-    <section className="border-t border-border/60 bg-slate-950 py-16 text-white sm:py-20">
-      <Container>
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-center">
-          <div>
-            <Badge className="border-white/10 bg-white/10 text-white hover:bg-white/10">
-              TRUST & VERIFICATION
-            </Badge>
+    <section
+      id="trust"
+      className="relative overflow-hidden border-y border-white/5 bg-slate-950 py-16 text-white sm:py-20 lg:py-24"
+    >
+      <div className="absolute left-[-160px] top-[-100px] h-[420px] w-[420px] rounded-full bg-violet-600/15 blur-[120px]" />
 
-            <h2 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl">
+      <div className="absolute bottom-[-180px] right-[-100px] h-[440px] w-[440px] rounded-full bg-fuchsia-600/10 blur-[130px]" />
+
+      <div
+        className="absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px)',
+          backgroundSize: '50px 50px',
+        }}
+      />
+
+      <Container>
+        <div className="relative grid gap-12 lg:grid-cols-[0.85fr_1.4fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-violet-300">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Trust & Verification
+            </div>
+
+            <h2 className="mt-6 max-w-md text-3xl font-black tracking-[-0.035em] sm:text-4xl lg:text-5xl">
               Built around
-              <span className="block text-primary-foreground">
+              <span className="block bg-gradient-to-r from-violet-300 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent">
                 transparency.
               </span>
             </h2>
 
-            <p className="mt-4 max-w-md leading-7 text-slate-400">
-              DroidZyra is designed to help users understand app versions
-              instead of blindly downloading files.
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400 sm:text-base">
+              DroidZyra helps you understand app versions, requirements
+              and available source information before making a choice.
             </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-300">
+                Clear metadata
+              </span>
+
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-300">
+                Version details
+              </span>
+
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-300">
+                Source transparency
+              </span>
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
               <div
-                key={item.title}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 transition-colors hover:bg-white/[0.07]"
+                key={item.number}
+                className="group relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/25 hover:bg-white/[0.07]"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                  <item.icon className="h-5 w-5" />
+                <div className="flex items-start justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/15 bg-violet-400/10 text-violet-300 transition-colors group-hover:bg-violet-500 group-hover:text-white">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+
+                  <span className="text-2xl font-black text-white/[0.07]">
+                    {item.number}
+                  </span>
                 </div>
 
-                <h3 className="mt-4 font-bold">{item.title}</h3>
+                <h3 className="mt-5 text-base font-bold text-white">
+                  {item.title}
+                </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   {item.desc}
                 </p>
+
+                <div className="absolute bottom-0 left-0 h-px w-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300 group-hover:w-full" />
               </div>
             ))}
           </div>
@@ -581,39 +742,85 @@ function TrustSection() {
 
 function FinalCTA() {
   return (
-    <section className="py-16 sm:py-20">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
       <Container>
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-violet-600 to-fuchsia-600 p-8 text-white shadow-2xl shadow-primary/20 sm:p-12">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-black/10 blur-3xl" />
+        <div className="relative overflow-hidden rounded-[32px] border border-primary/20 bg-gradient-to-br from-primary via-violet-600 to-fuchsia-600 px-6 py-12 text-white shadow-[0_30px_100px_-35px_hsl(var(--primary)/0.65)] sm:px-10 sm:py-14 lg:px-14">
+          
+          <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/15 blur-3xl" />
 
-          <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div className="absolute -bottom-32 left-[20%] h-80 w-80 rounded-full bg-black/15 blur-3xl" />
+
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)',
+              backgroundSize: '42px 42px',
+            }}
+          />
+
+          <div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold text-white/75">
-                READY TO EXPLORE?
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-white/90 backdrop-blur">
+                <Sparkles className="h-3.5 w-3.5" />
+                Ready to explore?
+              </div>
 
-              <h2 className="mt-2 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
-                Find the app version that fits your device.
+              <h2 className="mt-6 max-w-2xl text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
+                Find the right app version
+                <span className="block text-white/75">
+                  for your Android device.
+                </span>
               </h2>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
-                Search apps, compare versions and check compatibility with
-                DroidZyra.
+              <p className="mt-5 max-w-xl text-sm leading-7 text-white/75 sm:text-base">
+                Search apps, compare version details and check compatibility
+                before choosing the version that fits your device.
               </p>
+
+              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/75">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                  Version history
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                  Compatibility details
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                  Source information
+                </span>
+              </div>
             </div>
 
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="shrink-0 rounded-xl px-6 font-bold shadow-lg"
-            >
-              <Link href="/apps">
-                Explore Apps
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-3 lg:items-end">
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="h-12 w-full rounded-xl px-6 font-bold shadow-xl sm:w-auto"
+              >
+                <Link href="/apps">
+                  Explore Apps
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 w-full rounded-xl border-white/20 bg-white/10 px-6 font-semibold text-white backdrop-blur hover:bg-white/20 hover:text-white sm:w-auto"
+              >
+                <Link href="/compatibility">
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Check Compatibility
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </Container>
@@ -669,3 +876,5 @@ function SectionHeader({
     </div>
   );
 }
+
+

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Smartphone, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,28 +26,8 @@ export function CompatibilityFinderWidget({
   const router = useRouter();
   const [androidVersion, setAndroidVersion] = useState('');
   const [appId, setAppId] = useState('');
-  const [appList, setAppList] = useState<App[]>(apps ?? []);
-  const [loading, setLoading] = useState(!apps);
-
-  useEffect(() => {
-    if (apps) {
-      setAppList(apps);
-      setLoading(false);
-      return;
-    }
-    let active = true;
-    (async () => {
-      const { getApps } = await import('@/lib/data');
-      const { apps: fetched } = await getApps({ limit: 50 });
-      if (active) {
-        setAppList(fetched);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [apps]);
+  const [appList] = useState<App[]>(apps ?? []);
+  const loading = false;
 
   const canCheck = androidVersion && appId;
 
@@ -70,11 +50,14 @@ export function CompatibilityFinderWidget({
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-            Your Android version
-          </label>
+        <label
+  htmlFor="android-version"
+  className="mb-1.5 block text-xs font-medium text-muted-foreground"
+>
+  Your Android version
+</label>
           <Select value={androidVersion} onValueChange={setAndroidVersion}>
-            <SelectTrigger className="w-full">
+          <SelectTrigger id="android-version" className="w-full">
               <SelectValue placeholder="Select Android version" />
             </SelectTrigger>
             <SelectContent>
@@ -88,11 +71,14 @@ export function CompatibilityFinderWidget({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-            Select an app
-          </label>
+        <label
+  htmlFor="app-select"
+  className="mb-1.5 block text-xs font-medium text-muted-foreground"
+>
+  Select an app
+</label>
           <Select value={appId} onValueChange={setAppId} disabled={loading}>
-            <SelectTrigger className="w-full">
+          <SelectTrigger id="app-select" className="w-full">
               <SelectValue
                 placeholder={loading ? 'Loading apps…' : 'Select an app'}
               />

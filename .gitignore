@@ -34,3 +34,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local development backups
+backups/
+*.backup.ts
+*.backup.tsx
+*.before-*.tsx
+admin-page-copy.txt
+
+# Local audit reports
+lighthouse.json
+localhost_*.report.html
+
+
+*.backup

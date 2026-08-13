@@ -1,9 +1,17 @@
 import type { MetadataRoute } from 'next';
-import { getApps, getVersionsForApp } from '@/lib/data';
+import {
+  getApps,
+  getVersionsForApp,
+  getCategories,
+} from '@/lib/data';
+import { guides } from '@/lib/guides';
 import { siteConfig } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { apps } = await getApps({ limit: 1000 });
+  const [{ apps }, categories] = await Promise.all([
+    getApps({ limit: 1000 }),
+    getCategories(),
+  ]);
 
   const now = new Date();
 
@@ -33,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${siteConfig.url}/guides`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${siteConfig.url}/about`,
       lastModified: now,
       changeFrequency: 'monthly',
@@ -56,7 +70,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
+    {
+      url: `${siteConfig.url}/disclaimer`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${siteConfig.url}/dmca`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
   ];
+
+  const categoryPages: MetadataRoute.Sitemap = categories.map(
+    (category) => ({
+      url: `${siteConfig.url}/apps/category/${category.slug}`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    })
+  );
+
+  const guidePages: MetadataRoute.Sitemap = guides.map((guide) => ({
+    url: `${siteConfig.url}/guides/${guide.slug}`,
+    lastModified: new Date(guide.updatedAt),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
 
   const appPages: MetadataRoute.Sitemap = apps.map((app) => ({
     url: `${siteConfig.url}/apps/${app.slug}`,
@@ -80,5 +122,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticPages, ...appPages, ...versionPages];
+  return [
+    ...staticPages,
+    ...categoryPages,
+    ...guidePages,
+    ...appPages,
+    ...versionPages,
+  ];
 }

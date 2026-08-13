@@ -90,17 +90,6 @@ export function DownloadSourceSection({
         </p>
       </div>
 
-      {sourceUrl && sourceUrl.includes('example.com') && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/5 p-3 text-xs">
-          <FlaskConical className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-          <p className="text-muted-foreground">
-            <span className="font-medium text-warning">Demo data:</span> This
-            source URL is a placeholder for development. It does not link to a
-            real download.
-          </p>
-        </div>
-      )}
-
       {version.sha256 && (
         <div className="text-xs">
           <p className="font-medium text-muted-foreground mb-1">SHA-256</p>
@@ -112,3 +101,5 @@ export function DownloadSourceSection({
     </Card>
   );
 }
+
+

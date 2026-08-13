@@ -27,13 +27,13 @@ export const siteConfig = {
     {
       title: 'Discover',
       links: [
-        { label: 'App Directory', href: '/apps' },
         { label: 'Categories', href: '/apps#categories' },
-        {
-          label: 'Compatibility Finder',
-          href: '/compatibility',
-        },
-        { label: 'DroidZyra AI', href: '/ai' },
+{
+  label: 'Compatibility Finder',
+  href: '/compatibility',
+},
+{ label: 'Guides', href: '/guides' },
+{ label: 'DroidZyra AI', href: '/ai' },
       ],
     },
 
@@ -48,10 +48,7 @@ export const siteConfig = {
           label: 'Trust & Verification',
           href: '/#trust',
         },
-        {
-          label: 'Admin',
-          href: '/admin',
-        },
+        
       ],
     },
 
@@ -65,6 +62,14 @@ export const siteConfig = {
         {
           label: 'Terms of Use',
           href: '/terms',
+        },
+        {
+          label: 'Disclaimer',
+          href: '/disclaimer',
+        },
+        {
+          label: 'DMCA & Copyright',
+          href: '/dmca',
         },
         {
           label: 'Contact',

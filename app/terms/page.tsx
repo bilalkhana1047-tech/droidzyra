@@ -11,31 +11,31 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <Container className="py-10 lg:py-16">
+    <Container className="relative py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-4xl">
-        <div className="text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="relative overflow-hidden rounded-[28px] border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-violet-500/[0.05] px-6 py-10 text-center shadow-[0_20px_60px_-38px_hsl(var(--primary)/0.30)] sm:px-10 sm:py-12">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm">
             <FileText className="h-7 w-7" />
           </div>
 
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-primary">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             Legal
           </p>
 
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
             Terms of Use
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
             These terms explain the rules and conditions for using
             DroidZyra.
           </p>
         </div>
 
-        <div className="mt-10 space-y-6">
-          <Card>
+        <div className="mt-8 space-y-5">
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">1. Acceptance of Terms</h2>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">1. Acceptance of Terms</h2>
               <p className="mt-3 leading-7 text-muted-foreground">
                 By accessing or using DroidZyra, you agree to these Terms of
                 Use and our Privacy Policy. If you do not agree with these
@@ -44,9 +44,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 2. About DroidZyra
               </h2>
               <p className="mt-3 leading-7 text-muted-foreground">
@@ -63,11 +63,11 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
                   3. Accuracy of Information
                 </h2>
               </div>
@@ -86,9 +86,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 4. Third-Party Applications and Links
               </h2>
 
@@ -113,9 +113,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 5. No Piracy or Unauthorized Distribution
               </h2>
 
@@ -132,9 +132,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 6. Acceptable Use
               </h2>
 
@@ -162,9 +162,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 7. Intellectual Property
               </h2>
 
@@ -181,9 +181,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 8. Disclaimer
               </h2>
 
@@ -201,9 +201,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 9. Limitation of Liability
               </h2>
 
@@ -216,9 +216,9 @@ export default function TermsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/90 shadow-sm transition-all hover:border-primary/15 hover:shadow-md">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
                 10. Changes to These Terms
               </h2>
 
@@ -235,7 +235,7 @@ export default function TermsPage() {
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
                   11. Contact
                 </h2>
               </div>
@@ -256,4 +256,5 @@ export default function TermsPage() {
     </Container>
   );
 }
+
 

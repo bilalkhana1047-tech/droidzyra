@@ -258,20 +258,20 @@ export default async function AppDetailPage({
               defaultValue="overview"
               className="w-full"
             >
-              <TabsList className="w-full justify-start flex-wrap h-auto">
-                <TabsTrigger value="overview">
+              <TabsList className="w-full justify-start flex-wrap h-auto gap-1 rounded-2xl border border-border/60 bg-muted/30 p-1.5 shadow-sm">
+                <TabsTrigger value="overview" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
                   Overview
                 </TabsTrigger>
 
-                <TabsTrigger value="versions">
+                <TabsTrigger value="versions" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
                   Versions ({app.versions.length})
                 </TabsTrigger>
 
-                <TabsTrigger value="compatibility">
+                <TabsTrigger value="compatibility" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
                   Compatibility
                 </TabsTrigger>
 
-                <TabsTrigger value="faq">
+                <TabsTrigger value="faq" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
                   FAQ
                 </TabsTrigger>
               </TabsList>
@@ -285,8 +285,8 @@ export default async function AppDetailPage({
                   title="About"
                   icon={<Package className="h-5 w-5" />}
                 >
-                  <Card>
-                    <CardContent className="p-5">
+                  <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
+                    <CardContent className="p-6 sm:p-7">
                       <p className="text-muted-foreground leading-7">
                         {app.description ??
                           'No description available.'}
@@ -369,8 +369,8 @@ export default async function AppDetailPage({
                       <ListChecks className="h-5 w-5" />
                     }
                   >
-                    <Card>
-                      <CardContent className="p-5">
+                    <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
+                      <CardContent className="p-6 sm:p-7">
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div>
                             <p className="font-semibold">
@@ -462,8 +462,8 @@ export default async function AppDetailPage({
                       <Calendar className="h-5 w-5" />
                     }
                   >
-                    <Card>
-                      <CardContent className="p-5">
+                    <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
+                      <CardContent className="p-6 sm:p-7">
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                           <ReleaseInfo
                             label="Version"
@@ -545,11 +545,11 @@ export default async function AppDetailPage({
                       {app.compatibility.map((c) => (
                         <Card
                           key={c.id}
-                          className="p-4"
+                          className="group rounded-2xl border-border/60 bg-background/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md"
                         >
                           <div className="flex items-center justify-between gap-3 flex-wrap">
                             <div>
-                              <p className="font-medium text-sm">
+                              <p className="flex items-center gap-2 text-sm font-bold text-foreground">
                                 Android{' '}
                                 {c.android_version}{' '}
                                 <span className="text-muted-foreground font-normal">
@@ -635,7 +635,7 @@ export default async function AppDetailPage({
                   that you may also find useful.
                 </p>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {alternatives.map((alt) => (
                     <AppCard
                       key={alt.id}
@@ -647,7 +647,7 @@ export default async function AppDetailPage({
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-20">
+          <aside className="space-y-5 lg:sticky lg:top-24">
             <DownloadSourceSection
               version={latest}
               appName={app.name}
@@ -673,60 +673,133 @@ function AppHeader({
   latest: Version | null;
 }) {
   return (
-    <div className="flex items-start gap-4 sm:gap-5">
-      <AppIcon
-        src={app.icon_url}
-        alt={app.name}
-        name={app.name}
-        size={80}
-        className="shadow-sm"
-      />
+    <section className="relative overflow-hidden rounded-[28px] border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-violet-500/[0.06] p-6 shadow-[0_20px_70px_-35px_hsl(var(--primary)/0.35)] sm:p-8">
+      <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/[0.10] blur-3xl" />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            {app.name}
-          </h1>
-
-          <StatusBadge status={app.status} />
+      <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start">
+        <div className="shrink-0">
+          <div className="rounded-[22px] border border-border/60 bg-background/80 p-2 shadow-lg backdrop-blur">
+            <AppIcon
+              src={app.icon_url}
+              alt={app.name}
+              name={app.name}
+              size={96}
+              className="rounded-2xl"
+            />
+          </div>
         </div>
 
-        <p className="mt-1 text-muted-foreground">
-          {app.developer}
-        </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">
+              {app.name}
+            </h1>
 
-        <div className="mt-3 flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
-          {app.category && (
-            <Link
-              href={`/apps?category=${app.category.slug}`}
-              className="font-medium text-primary hover:underline"
-            >
-              {app.category.name}
-            </Link>
-          )}
+            <StatusBadge status={app.status} />
+
+            {latest && (
+              <VerificationBadge verified={latest.verified} />
+            )}
+          </div>
+
+          <p className="mt-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Building2 className="h-4 w-4 text-primary" />
+            {app.developer}
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {app.category && (
+              <Link
+                href={`/apps?category=${app.category.slug}`}
+                className="inline-flex items-center rounded-full border border-primary/15 bg-primary/[0.07] px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+              >
+                {app.category.name}
+              </Link>
+            )}
+
+            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              <Package className="mr-1.5 h-3.5 w-3.5" />
+              {app.package_name}
+            </span>
+
+            {latest && (
+              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                <History className="mr-1.5 h-3.5 w-3.5" />
+                Latest v{latest.version_name}
+              </span>
+            )}
+          </div>
 
           {latest && (
-            <>
-              <span className="text-muted-foreground/40">
-                |
-              </span>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Released
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {formatDate(latest.release_date)}
+                </p>
+              </div>
 
-              <span>
-                Latest: v{latest.version_name}
-              </span>
+              <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Min Android
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  Android {latest.min_android}
+                </p>
+              </div>
 
-              <span className="text-muted-foreground/40">
-                |
-              </span>
-
-              <span>
-                {formatDate(latest.release_date)}
-              </span>
-            </>
+              <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  File Size
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {formatFileSize(latest.file_size)}
+                </p>
+              </div>
+            </div>
           )}
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button asChild className="h-11 rounded-xl px-5 shadow-md shadow-primary/15">
+              <Link href={`/apps/${app.slug}/versions`}>
+                <History className="mr-2 h-4 w-4" />
+                View Versions
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-xl bg-background/70 px-5 backdrop-blur"
+            >
+              <Link href="/compatibility">
+                <Smartphone className="mr-2 h-4 w-4" />
+                Check Compatibility
+              </Link>
+            </Button>
+
+            {app.official_url && (
+              <Button
+                asChild
+                variant="ghost"
+                className="h-11 rounded-xl px-4"
+              >
+                <a
+                  href={app.official_url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Official Website
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -807,22 +880,22 @@ function AppInfoSidebar({
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-start justify-between gap-3 text-sm"
+            className="flex items-start justify-between gap-4 rounded-xl px-3 py-3 text-sm transition-colors hover:bg-muted/40"
           >
-            <span className="flex items-center gap-2 text-muted-foreground">
+            <span className="flex items-center gap-2.5 text-muted-foreground">
               {row.icon}
               {row.label}
             </span>
 
-            <span className="font-medium text-right text-xs break-all">
+            <span className="max-w-[150px] break-all text-right text-xs font-semibold text-foreground">
               {row.value}
             </span>
           </div>
         ))}
 
         {latest && (
-          <div className="flex items-start justify-between gap-3 text-sm pt-2 border-t border-border">
-            <span className="flex items-center gap-2 text-muted-foreground">
+          <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/25 px-3 py-3 text-sm">
+            <span className="flex items-center gap-2.5 text-muted-foreground">
               <History className="h-4 w-4" />
               Verification
             </span>
@@ -835,7 +908,7 @@ function AppInfoSidebar({
 
         {/* Source Information */}
         {latest && (
-          <div className="border-t border-border pt-3 space-y-3">
+          <div className="mt-3 space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
             <p className="text-sm font-semibold">
               Source Information
             </p>
@@ -861,7 +934,7 @@ function AppInfoSidebar({
                   SHA-256
                 </p>
 
-                <p className="mt-1 break-all rounded-lg bg-muted/50 p-2 font-mono text-[10px] leading-5">
+                <p className="mt-2 break-all rounded-xl border border-border/60 bg-background p-3 font-mono text-[10px] leading-5 text-muted-foreground">
                   {latest.sha256}
                 </p>
               </div>
@@ -872,7 +945,7 @@ function AppInfoSidebar({
                 href={latest.source_url}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 View source
@@ -886,7 +959,7 @@ function AppInfoSidebar({
             href={app.official_url}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="flex items-center gap-1.5 text-sm text-primary hover:underline pt-2 border-t border-border"
+            className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Official website
@@ -907,13 +980,13 @@ function InfoMiniCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="group rounded-2xl border border-border/60 bg-gradient-to-br from-muted/30 to-background p-4 transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-sm">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {icon}
         {label}
       </div>
 
-      <p className="mt-1.5 break-all text-sm font-semibold">
+      <p className="mt-2 break-all text-sm font-bold text-foreground">
         {value}
       </p>
     </div>
@@ -928,7 +1001,7 @@ function ReleaseInfo({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+    <div className="group rounded-2xl border border-border/60 bg-gradient-to-br from-muted/30 to-background p-4 transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-sm">
       <p className="text-xs text-muted-foreground">
         {label}
       </p>
@@ -951,7 +1024,7 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="flex items-center gap-2 text-lg font-semibold mb-4">
+      <h2 className="mb-4 flex items-center gap-3 text-lg font-bold tracking-tight">
         <span className="text-primary">
           {icon}
         </span>
@@ -963,4 +1036,7 @@ function Section({
     </section>
   );
 }
+
+
+
 
