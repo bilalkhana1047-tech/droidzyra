@@ -2,9 +2,6 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 type AppRow = {
   id: string;
@@ -63,6 +60,10 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
     if (!supabase) {
       return NextResponse.json(
