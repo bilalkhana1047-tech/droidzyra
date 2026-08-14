@@ -642,7 +642,7 @@ function HowItWorks() {
                     <step.icon className="h-5 w-5" />
                   </div>
 
-                  <span className="text-3xl font-black tracking-tight text-primary/60 transition-colors group-hover:text-primary/80">
+                  <span className="text-3xl font-black tracking-tight text-primary transition-colors group-hover:text-primary/80">
                     {step.number}
                   </span>
                 </div>
@@ -939,6 +939,7 @@ function SectionHeader({
     </div>
   );
 }
+
 
 
 
