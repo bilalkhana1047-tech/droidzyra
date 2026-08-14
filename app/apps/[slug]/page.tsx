@@ -692,6 +692,7 @@ function AppHeader({
               alt={app.name}
               name={app.name}
               size={96}
+              priority
               className="rounded-2xl"
             />
           </div>
@@ -1057,6 +1058,8 @@ function Section({
     </section>
   );
 }
+
+
 
 
 

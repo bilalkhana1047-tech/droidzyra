@@ -108,12 +108,14 @@ export function AppIcon({
   name,
   size = 48,
   className,
+  priority = false,
 }: {
   src?: string | null;
   alt: string;
   name: string;
   size?: number;
   className?: string;
+  priority?: boolean;
 }) {
   const initials = name
     .split(' ')
@@ -128,7 +130,8 @@ export function AppIcon({
         alt={alt}
         width={size}
         height={size}
-        className={cn('rounded-xl object-cover', className)}
+      priority={priority}
+      className={cn('rounded-xl object-cover', className)}
       />
     );
   }
@@ -145,5 +148,6 @@ export function AppIcon({
     </div>
   );
 }
+
 
 
