@@ -91,6 +91,19 @@ const emptyVersion: VersionForm = {
   custom_download_url: "",
 };
 
+function isValidHttpsUrl(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) return true;
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function timeAgo(dateString?: string | null) {
   if (!dateString) return "Recently";
 
@@ -418,6 +431,16 @@ const [versionLoading, setVersionLoading] = useState(false);
         return;
       }
     
+      if (!isValidHttpsUrl(newVersion.source_url)) {
+        setErrorMessage("Source URL must be a valid HTTPS URL.");
+        return;
+      }
+
+      if (!isValidHttpsUrl(newVersion.custom_download_url)) {
+        setErrorMessage("Custom Download URL must be a valid HTTPS URL.");
+        return;
+      }
+
       setVersionLoading(true);
       setErrorMessage("");
     
@@ -481,6 +504,16 @@ const [versionLoading, setVersionLoading] = useState(false);
         return;
       }
     
+      if (!isValidHttpsUrl(newVersion.source_url)) {
+        setErrorMessage("Source URL must be a valid HTTPS URL.");
+        return;
+      }
+
+      if (!isValidHttpsUrl(newVersion.custom_download_url)) {
+        setErrorMessage("Custom Download URL must be a valid HTTPS URL.");
+        return;
+      }
+
       setVersionLoading(true);
       setErrorMessage("");
     
@@ -1127,6 +1160,8 @@ const [versionLoading, setVersionLoading] = useState(false);
             </div>
           </div>
 
+
+
           {showVersionForm && (
             <div className="app-form" style={{ marginBottom: "20px" }}>
               <div className="form-grid">
@@ -1382,7 +1417,7 @@ const [versionLoading, setVersionLoading] = useState(false);
   function renderApps() {
     return (
       <main className="content">
-        {errorMessage && (
+        {errorMessage && !selectedAppForVersions && (
           <div className="error-box">
             <strong>Application operation failed</strong>
             <span>{errorMessage}</span>
@@ -2012,6 +2047,24 @@ const [versionLoading, setVersionLoading] = useState(false);
               </button>
             </div>
           </div>
+
+          {errorMessage && (
+            <div
+              style={{
+                margin: "0 0 18px",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                border: "1px solid #fecaca",
+                background: "#fef2f2",
+                color: "#b91c1c",
+                fontSize: "12px",
+                fontWeight: 650,
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+
 
           {showVersionForm && (
             <div className="app-form" style={{ marginBottom: "20px" }}>
@@ -5295,6 +5348,7 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
 
 
 

@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Sign in to manage DroidZyra
+            Private administrator area for authorized DroidZyra administrators only.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@example.com"
+              placeholder="Administrator email"
               required
               autoComplete="email"
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
@@ -125,4 +125,5 @@ export default function AdminLoginPage() {
     </main>
   );
 }
+
 

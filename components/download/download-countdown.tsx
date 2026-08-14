@@ -44,7 +44,7 @@ export function DownloadCountdown({
       </div>
 
       <h1 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl">
-        {ready ? "Your download is ready" : "Preparing your download"}
+        {ready ? "Your download source is ready" : "Preparing download options"}
       </h1>
 
       <p className="mt-3 text-sm leading-7 text-muted-foreground">
@@ -75,7 +75,7 @@ export function DownloadCountdown({
             rel="noopener noreferrer nofollow"
           >
             <Download className="mr-2 h-5 w-5" />
-            Continue Download
+            Continue to Download Source
           </a>
         </Button>
       )}
@@ -84,10 +84,10 @@ export function DownloadCountdown({
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
         <p className="text-xs leading-6 text-muted-foreground">
-          DroidZyra does not automatically install files on your device.
-          Review the source and file details before continuing.
+          DroidZyra does not host or automatically install APK files. You will be redirected to an external download source. Review the destination and file details before downloading.
         </p>
       </div>
     </div>
   );
 }
+
