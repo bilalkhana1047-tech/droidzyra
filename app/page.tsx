@@ -36,7 +36,7 @@ import {
 
 export default async function HomePage() {
   const [{ apps }, popular, trending, recent, categories] = await Promise.all([
-    getApps({ limit: 50 }),
+    getApps({ limit: 20 }),
     getPopularApps(6),
     getTrendingApps(6),
     getRecentlyUpdatedApps(8),
@@ -939,6 +939,9 @@ function SectionHeader({
     </div>
   );
 }
+
+
+
 
 
 

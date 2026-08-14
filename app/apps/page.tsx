@@ -9,31 +9,56 @@ export const metadata: Metadata = {
   alternates: { canonical: '/apps' },
 };
 
+const PAGE_SIZE = 24;
+
 export default async function AppsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string };
+  searchParams: {
+    q?: string;
+    category?: string;
+    page?: string;
+  };
 }) {
-  const query = searchParams.q ?? '';
+  const query = searchParams.q?.trim() ?? '';
   const categorySlug = searchParams.category ?? '';
 
-  const [categories, { apps, total }] = await Promise.all([
-    getCategories(),
-    getApps({ limit: 100 }),
-  ]);
+  const categories = await getCategories();
 
-  const activeCategory = categories.find((c) => c.slug === categorySlug);
-  const filtered = activeCategory
-    ? apps.filter((a) => a.category_id === activeCategory.id)
-    : apps;
+  const activeCategory = categories.find(
+    (category) => category.slug === categorySlug
+  );
+
+  const requestedPage = Number(searchParams.page ?? '1');
+
+  const currentPage =
+    Number.isFinite(requestedPage) && requestedPage > 0
+      ? Math.floor(requestedPage)
+      : 1;
+
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
+  const { apps, total } = await getApps({
+    limit: PAGE_SIZE,
+    offset,
+    search: query || undefined,
+    category: activeCategory?.id,
+  });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / PAGE_SIZE)
+  );
 
   return (
     <AppsDirectoryClient
-      apps={filtered}
+      apps={apps}
       categories={categories}
-      total={filtered.length}
+      total={total}
       initialQuery={query}
       initialCategory={categorySlug}
+      currentPage={currentPage}
+      totalPages={totalPages}
     />
   );
 }

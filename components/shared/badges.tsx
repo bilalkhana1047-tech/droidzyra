@@ -129,7 +129,6 @@ export function AppIcon({
         width={size}
         height={size}
         className={cn('rounded-xl object-cover', className)}
-        unoptimized
       />
     );
   }
@@ -146,3 +145,4 @@ export function AppIcon({
     </div>
   );
 }
+

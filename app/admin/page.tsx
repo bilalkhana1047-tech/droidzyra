@@ -145,6 +145,24 @@ const emptyApp: AppForm = {
 
 export default function AdminPage() {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
+
+  useEffect(() => {
+    const section = new URLSearchParams(window.location.search)
+      .get("section")
+      ?.toLowerCase();
+
+    const sectionMap: Record<string, string> = {
+      dashboard: "Dashboard",
+      apps: "Apps",
+      compatibility: "Compatibility",
+      analytics: "Analytics",
+      settings: "Settings",
+    };
+
+    if (section && sectionMap[section]) {
+      setActiveMenu(sectionMap[section]);
+    }
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -180,6 +198,24 @@ const [versionLoading, setVersionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const ADMIN_PAGE_SIZE = 50;
+
+  const [adminPage, setAdminPage] = useState(1);
+  const [adminTotalApps, setAdminTotalApps] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (activeMenu !== "Apps") return;
+
+      loadAdminApps(
+        1,
+        searchTerm,
+        statusFilter
+      );
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchTerm, statusFilter, activeMenu]);
   const menuItems = [
     { name: "Dashboard", icon: "▦" },
     { name: "Apps", icon: "◈" },
@@ -188,6 +224,59 @@ const [versionLoading, setVersionLoading] = useState(false);
     { name: "Settings", icon: "⚙" },
   ];
 
+  async function loadAdminApps(
+    page = adminPage,
+    search = searchTerm,
+    status = statusFilter
+  ) {
+    if (!supabase) return;
+
+    const safePage = Math.max(page, 1);
+    const from = (safePage - 1) * ADMIN_PAGE_SIZE;
+    const to = from + ADMIN_PAGE_SIZE - 1;
+
+    let query = supabase
+      .from("apps")
+      .select(
+        "id, name, slug, developer, package_name, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at",
+        { count: "exact" }
+      );
+
+    const cleanSearch = search.trim();
+
+    if (cleanSearch) {
+      query = query.or(
+        `name.ilike.%${cleanSearch}%,slug.ilike.%${cleanSearch}%,developer.ilike.%${cleanSearch}%,package_name.ilike.%${cleanSearch}%`
+      );
+    }
+
+    if (status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    const { data, error, count } = await query
+      .order("updated_at", { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Admin apps loading error:", error);
+      setErrorMessage(error.message);
+      return;
+    }
+
+    setApps((data ?? []) as AppItem[]);
+    setAdminTotalApps(count ?? 0);
+    setAdminPage(safePage);
+  }
+  function getJoinedAppName(
+    app: { name?: string } | { name?: string }[] | null | undefined
+  ) {
+    if (Array.isArray(app)) {
+      return app[0]?.name ?? "Application";
+    }
+
+    return app?.name ?? "Application";
+  }
   async function loadDashboard() {
     if (!supabase) {
       setErrorMessage(
@@ -205,7 +294,6 @@ const [versionLoading, setVersionLoading] = useState(false);
         totalAppsResult,
         compatibilityResult,
         versionsResult,
-        appsResult,
         versionsActivityResult,
         compatibilityActivityResult,
       ] = await Promise.all([
@@ -227,24 +315,18 @@ const [versionLoading, setVersionLoading] = useState(false);
           .select("*", { count: "exact", head: true }),
 
         supabase
-          .from("apps")
-          .select(
-            "id, name, slug, developer, package_name, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at"
-          )
-          .order("updated_at", { ascending: false })
-          .limit(100),
-
-        supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, created_at"
+            "id, app_id, version_name, version_code, release_date, created_at, app:apps(name)"
           )
           .order("created_at", { ascending: false })
           .limit(20),
 
         supabase
           .from("compatibility")
-          .select("id, app_id, android_version, status")
+          .select(
+            "id, app_id, android_version, status, app:apps(name)"
+          )
           .order("id", { ascending: false })
           .limit(20),
       ]);
@@ -267,34 +349,13 @@ const [versionLoading, setVersionLoading] = useState(false);
       if (versionsResult.error) {
         console.error("Versions count error:", versionsResult.error);
       }
-
-      if (appsResult.error) {
-        console.error("Apps loading error:", appsResult.error);
-        setErrorMessage(appsResult.error.message);
-      }
-
-      setStats({
-        activeApps: activeAppsResult.count ?? 0,
-        compatibilityChecks: compatibilityResult.count ?? 0,
-        totalApps: totalAppsResult.count ?? 0,
-        totalVersions: versionsResult.count ?? 0,
-      });
-
-      const appData = (appsResult.data ?? []) as AppItem[];
-
-      setApps(appData);
-
-      const appMap = new Map(
-        appData.map((app) => [app.id, app.name])
-      );
-
-      const newActivities: Activity[] = [];
+const newActivities: Activity[] = [];
 
       for (const version of versionsActivityResult.data ?? []) {
         newActivities.push({
           id: `version-${version.id}`,
           action: `Version ${version.version_name ?? "New"} added`,
-          user: appMap.get(version.app_id) ?? "Application",
+          user: getJoinedAppName(version.app),
           time: timeAgo(version.created_at ?? version.release_date),
           status: "Updated",
         });
@@ -304,7 +365,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         newActivities.push({
           id: `compat-${record.id}`,
           action: `Android ${record.android_version} compatibility`,
-          user: appMap.get(record.app_id) ?? "Application",
+          user: getJoinedAppName(record.app),
           time: "Recent",
           status:
             record.status === "compatible"
@@ -320,6 +381,12 @@ const [versionLoading, setVersionLoading] = useState(false);
       });
 
       setActivities(newActivities.slice(0, 8));
+
+      await loadAdminApps(
+        adminPage,
+        searchTerm,
+        statusFilter
+      );
     } catch (error) {
       console.error("Admin dashboard error:", error);
       setErrorMessage("Unable to load dashboard data.");
@@ -820,23 +887,7 @@ const [versionLoading, setVersionLoading] = useState(false);
     }
   }
 
-  const filteredApps = useMemo(() => {
-    const search = searchTerm.trim().toLowerCase();
-
-    return apps.filter((app) => {
-      const matchesSearch =
-        !search ||
-        app.name.toLowerCase().includes(search) ||
-        app.slug.toLowerCase().includes(search) ||
-        app.developer.toLowerCase().includes(search) ||
-        app.package_name.toLowerCase().includes(search);
-
-      const matchesStatus =
-        statusFilter === "all" || app.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [apps, searchTerm, statusFilter]);
+  const filteredApps = apps;
 
   function renderDashboard() {
     return (
@@ -1725,7 +1776,7 @@ const [versionLoading, setVersionLoading] = useState(false);
 
         <div className="apps-result-info">
           Showing <strong>{filteredApps.length}</strong> of{" "}
-          <strong>{apps.length}</strong> applications
+          <strong>{adminTotalApps}</strong> applications
         </div>
 
         <div
@@ -1954,7 +2005,7 @@ const [versionLoading, setVersionLoading] = useState(false);
                     <button
                       type="button"
                       onClick={() => {
-                        window.location.href = `/admin/screenshots/${app.id}`;
+                        window.open(`/admin/screenshots/${app.id}`, "_blank", "noopener,noreferrer");
                       }}
                       disabled={loading || versionLoading}
                       style={{
@@ -2015,6 +2066,70 @@ const [versionLoading, setVersionLoading] = useState(false);
             )}
           </div>
         </div>
+
+        {adminTotalApps > ADMIN_PAGE_SIZE && (
+          <div
+            style={{
+              marginTop: "18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={adminPage <= 1 || loading}
+              onClick={() =>
+                loadAdminApps(
+                  adminPage - 1,
+                  searchTerm,
+                  statusFilter
+                )
+              }
+            >
+              ← Previous
+            </button>
+
+            <span
+              style={{
+                minWidth: "120px",
+                textAlign: "center",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#667085",
+              }}
+            >
+              Page {adminPage} of{" "}
+              {Math.max(
+                1,
+                Math.ceil(adminTotalApps / ADMIN_PAGE_SIZE)
+              )}
+            </span>
+
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={
+                adminPage >=
+                  Math.ceil(adminTotalApps / ADMIN_PAGE_SIZE) ||
+                loading
+              }
+              onClick={() =>
+                loadAdminApps(
+                  adminPage + 1,
+                  searchTerm,
+                  statusFilter
+                )
+              }
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
       {selectedAppForVersions && (
         <div className="panel" style={{ marginTop: "24px" }}>
           <div className="section-heading">
@@ -3540,7 +3655,14 @@ const [versionLoading, setVersionLoading] = useState(false);
                   : ""
               }`}
               onClick={() => {
-                setActiveMenu(item.name);
+                const section = item.name.toLowerCase();
+
+                window.open(
+                  `/admin?section=${encodeURIComponent(section)}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+
                 setSidebarOpen(false);
               }}
             >
@@ -3552,7 +3674,6 @@ const [versionLoading, setVersionLoading] = useState(false);
             </button>
           ))}
         </div>
-
         <div className="sidebar-bottom">
           <div className="admin-card">
             <div className="admin-avatar">
@@ -5348,6 +5469,18 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

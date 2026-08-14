@@ -21,7 +21,6 @@ import { Breadcrumbs } from '@/components/layout/breadcrumbs';
 import { Container } from '@/components/layout/container';
 import type { App, Category } from '@/lib/types';
 
-const PAGE_SIZE = 9;
 
 export function AppsDirectoryClient({
   apps,
@@ -29,49 +28,35 @@ export function AppsDirectoryClient({
   total,
   initialQuery,
   initialCategory,
+  currentPage,
+  totalPages,
 }: {
   apps: App[];
   categories: Category[];
   total: number;
   initialQuery: string;
   initialCategory: string;
+  currentPage: number;
+  totalPages: number;
 }) {
   const router = useRouter();
 
   const [query, setQuery] = useState(initialQuery);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const activeCategory = useMemo(
     () => categories.find((c) => c.slug === initialCategory),
     [categories, initialCategory]
   );
 
-  const filtered = useMemo(() => {
-    let list = apps;
-
-    if (query.trim()) {
-      const q = query.toLowerCase();
-
-      list = list.filter(
-        (app) =>
-          app.name.toLowerCase().includes(q) ||
-          app.developer.toLowerCase().includes(q) ||
-          app.package_name.toLowerCase().includes(q) ||
-          (app.description ?? '').toLowerCase().includes(q)
-      );
-    }
-
-    return list;
-  }, [apps, query]);
-
-  const visible = filtered.slice(0, visibleCount);
+  const visible = apps;
 
   const updateUrl = useCallback(
-    (q: string, category: string) => {
+    (q: string, category: string, page = 1) => {
       const params = new URLSearchParams();
 
       if (q) params.set('q', q);
       if (category) params.set('category', category);
+      if (page > 1) params.set('page', String(page));
 
       const qs = params.toString();
 
@@ -82,18 +67,15 @@ export function AppsDirectoryClient({
 
   const onSearchChange = (value: string) => {
     setQuery(value);
-    setVisibleCount(PAGE_SIZE);
-    updateUrl(value, initialCategory);
+    updateUrl(value, initialCategory, 1);
   };
 
   const onCategoryChange = (slug: string) => {
-    setVisibleCount(PAGE_SIZE);
-    updateUrl(query, slug);
+    updateUrl(query, slug, 1);
   };
 
   const clearFilters = () => {
     setQuery('');
-    setVisibleCount(PAGE_SIZE);
     router.push('/apps');
   };
 
@@ -311,8 +293,8 @@ export function AppsDirectoryClient({
                         variant="secondary"
                         className="rounded-full"
                       >
-                        {filtered.length} result
-                        {filtered.length !== 1 ? 's' : ''}
+                        {total} result
+                        {total !== 1 ? 's' : ''}
                       </Badge>
                     </div>
 
@@ -378,25 +360,87 @@ export function AppsDirectoryClient({
                     </div>
                   </div>
 
-                  {visibleCount < filtered.length && (
-                    <div className="mt-8 flex flex-col items-center gap-3">
+                                    {totalPages > 1 && (
+                    <div className="mt-8 flex flex-col items-center gap-4">
                       <p className="text-xs text-muted-foreground">
-                        Showing {visible.length} of {filtered.length} apps
+                        Page {currentPage} of {totalPages} · {total} apps
                       </p>
 
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={() =>
-                          setVisibleCount((count) => count + PAGE_SIZE)
-                        }
-                        className="min-w-[210px] rounded-xl bg-background shadow-sm"
-                      >
-                        Load more
-                        <span className="ml-1 text-muted-foreground">
-                          ({filtered.length - visibleCount} remaining)
-                        </span>
-                      </Button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentPage <= 1}
+                          onClick={() =>
+                            updateUrl(
+                              query,
+                              initialCategory,
+                              Math.max(1, currentPage - 1)
+                            )
+                          }
+                          className="rounded-xl"
+                        >
+                          ← Previous
+                        </Button>
+
+                        {Array.from(
+                          { length: Math.min(totalPages, 7) },
+                          (_, index) => {
+                            let pageNumber: number;
+
+                            if (totalPages <= 7) {
+                              pageNumber = index + 1;
+                            } else if (currentPage <= 4) {
+                              pageNumber = index + 1;
+                            } else if (currentPage >= totalPages - 3) {
+                              pageNumber = totalPages - 6 + index;
+                            } else {
+                              pageNumber = currentPage - 3 + index;
+                            }
+
+                            return (
+                              <Button
+                                key={pageNumber}
+                                variant={
+                                  pageNumber === currentPage
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() =>
+                                  updateUrl(
+                                    query,
+                                    initialCategory,
+                                    pageNumber
+                                  )
+                                }
+                                className="min-w-9 rounded-xl"
+                              >
+                                {pageNumber}
+                              </Button>
+                            );
+                          }
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentPage >= totalPages}
+                          onClick={() =>
+                            updateUrl(
+                              query,
+                              initialCategory,
+                              Math.min(
+                                totalPages,
+                                currentPage + 1
+                              )
+                            )
+                          }
+                          className="rounded-xl"
+                        >
+                          Next →
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>
@@ -408,3 +452,9 @@ export function AppsDirectoryClient({
     </main>
   );
 }
+
+
+
+
+
+

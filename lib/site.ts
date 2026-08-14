@@ -23,6 +23,14 @@ export const siteConfig = {
     { label: 'DroidZyra AI', href: '/ai' },
   ],
 
+  socials: {
+    facebook: "https://www.facebook.com/",
+    instagram: "https://www.instagram.com/",
+    youtube: "https://www.youtube.com/",
+    twitter: "https://x.com/",
+    pinterest: "https://www.pinterest.com/",
+  },
+
   footerLinks: [
     {
       title: 'Discover',
@@ -94,3 +102,4 @@ export const androidVersions = [
   '15.0',
   '16.0',
 ];
+

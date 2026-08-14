@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { siteConfig } from '@/lib/site';
 import type { App } from '@/lib/types';
-import { searchApps } from '@/lib/data';
 import { AppIcon } from '@/components/shared/badges';
 import { cn } from '@/lib/utils';
 
@@ -18,18 +17,58 @@ export function HeroSearch({ className }: { className?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = setTimeout(async () => {
+    const controller = new AbortController();
+
+    const handler = window.setTimeout(async () => {
       const q = value.trim();
+
       if (q.length < 2) {
         setResults([]);
+        setLoading(false);
         return;
       }
+
       setLoading(true);
-      const r = await searchApps(q, 6);
-      setResults(r);
-      setLoading(false);
+
+      try {
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(q)}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          setResults([]);
+          return;
+        }
+
+        const data = (await response.json()) as {
+          apps?: App[];
+        };
+
+        setResults(data.apps ?? []);
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        console.error("Search request failed:", error);
+        setResults([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     }, 250);
-    return () => clearTimeout(handler);
+
+    return () => {
+      window.clearTimeout(handler);
+      controller.abort();
+    };
   }, [value]);
 
   useEffect(() => {
@@ -135,3 +174,5 @@ export function HeroSearch({ className }: { className?: string }) {
     </div>
   );
 }
+
+

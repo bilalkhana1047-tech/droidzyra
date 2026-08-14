@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type {
   App,
@@ -12,17 +13,25 @@ function compareAndroid(a: string, b: string): number {
   return parseFloat(a) - parseFloat(b);
 }
 
+const getCategoriesCached = unstable_cache(
+  async (): Promise<Category[]> => {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name');
+
+    if (error) return [];
+
+    return data as Category[];
+  },
+  ['droidzyra-categories'],
+  { revalidate: 60 }
+);
+
 export async function getCategories(): Promise<Category[]> {
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-
-  if (error) return [];
-
-  return data as Category[];
+  return getCategoriesCached();
 }
 
 async function attachLatestVersions(apps: App[]): Promise<App[]> {
@@ -31,22 +40,23 @@ async function attachLatestVersions(apps: App[]): Promise<App[]> {
   const appIds = apps.map((a) => a.id);
 
   const { data, error } = await supabase
-    .from('versions')
+    .from('latest_versions')
     .select(
-      'id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url, source_type, verified, created_at'
+      'id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, source_type, verified, created_at'
     )
-    .in('app_id', appIds)
-    .order('release_date', { ascending: false });
+    .in('app_id', appIds);
 
-  if (error || !data) return apps;
-
-  const latestByApp = new Map<string, Version>();
-
-  for (const version of data as Version[]) {
-    if (!latestByApp.has(version.app_id)) {
-      latestByApp.set(version.app_id, version);
-    }
+  if (error || !data) {
+    console.error('Latest versions loading error:', error);
+    return apps;
   }
+
+  const latestByApp = new Map<string, Version>(
+    (data as Version[]).map((version) => [
+      version.app_id,
+      version,
+    ])
+  );
 
   return apps.map((app) => ({
     ...app,
@@ -238,35 +248,10 @@ export async function getLatestVersion(
   return data as Version;
 }
 
-export async function getPopularApps(
-  limit = 6
-): Promise<App[]> {
-  if (!supabase) return [];
+const getPopularAppsCached = unstable_cache(
+  async (limit: number): Promise<App[]> => {
+    if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from('apps')
-    .select('*, category:categories(*)')
-    .eq('status', 'active')
-    .order('updated_at', { ascending: false })
-    .limit(limit);
-
-  if (error) return [];
-
-  return attachLatestVersions((data as App[]) ?? []);
-}
-
-export async function getRecentlyUpdatedApps(
-  limit = 8
-): Promise<App[]> {
-  if (!supabase) return [];
-
-  const { data: versionData, error: vErr } = await supabase
-    .from('versions')
-    .select('app_id, release_date')
-    .order('release_date', { ascending: false })
-    .limit(limit * 3);
-
-  if (vErr || !versionData) {
     const { data, error } = await supabase
       .from('apps')
       .select('*, category:categories(*)')
@@ -276,42 +261,83 @@ export async function getRecentlyUpdatedApps(
 
     if (error) return [];
 
-    return (data as App[]) ?? [];
-  }
+    return attachLatestVersions((data as App[]) ?? []);
+  },
+  ['droidzyra-popular-apps'],
+  { revalidate: 60 }
+);
 
-  const seenAppIds = new Set<string>();
-  const orderedAppIds: string[] = [];
+export async function getPopularApps(
+  limit = 6
+): Promise<App[]> {
+  return getPopularAppsCached(limit);
+}
 
-  for (const version of versionData as { app_id: string }[]) {
-    if (!seenAppIds.has(version.app_id)) {
-      seenAppIds.add(version.app_id);
-      orderedAppIds.push(version.app_id);
+const getRecentlyUpdatedAppsCached = unstable_cache(
+  async (limit: number): Promise<App[]> => {
+    if (!supabase) return [];
 
-      if (orderedAppIds.length >= limit) {
-        break;
+    const { data: versionData, error: vErr } = await supabase
+      .from('versions')
+      .select('app_id, release_date')
+      .order('release_date', { ascending: false })
+      .limit(limit * 3);
+
+    if (vErr || !versionData) {
+      const { data, error } = await supabase
+        .from('apps')
+        .select('*, category:categories(*)')
+        .eq('status', 'active')
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+
+      if (error) return [];
+
+      return attachLatestVersions((data as App[]) ?? []);
+    }
+
+    const seenAppIds = new Set<string>();
+    const orderedAppIds: string[] = [];
+
+    for (const version of versionData as { app_id: string }[]) {
+      if (!seenAppIds.has(version.app_id)) {
+        seenAppIds.add(version.app_id);
+        orderedAppIds.push(version.app_id);
+
+        if (orderedAppIds.length >= limit) {
+          break;
+        }
       }
     }
-  }
 
-  if (orderedAppIds.length === 0) return [];
+    if (orderedAppIds.length === 0) return [];
 
-  const { data: apps, error: aErr } = await supabase
-    .from('apps')
-    .select('*, category:categories(*)')
-    .in('id', orderedAppIds)
-    .eq('status', 'active');
+    const { data: apps, error: aErr } = await supabase
+      .from('apps')
+      .select('*, category:categories(*)')
+      .in('id', orderedAppIds)
+      .eq('status', 'active');
 
-  if (aErr || !apps) return [];
+    if (aErr || !apps) return [];
 
-  const appMap = new Map(
-    (apps as App[]).map((app) => [app.id, app])
-  );
+    const appMap = new Map(
+      (apps as App[]).map((app) => [app.id, app])
+    );
 
-  const ordered = orderedAppIds
-    .map((id) => appMap.get(id))
-    .filter(Boolean) as App[];
+    const ordered = orderedAppIds
+      .map((id) => appMap.get(id))
+      .filter(Boolean) as App[];
 
-  return attachLatestVersions(ordered);
+    return attachLatestVersions(ordered);
+  },
+  ['droidzyra-recently-updated-apps'],
+  { revalidate: 60 }
+);
+
+export async function getRecentlyUpdatedApps(
+  limit = 8
+): Promise<App[]> {
+  return getRecentlyUpdatedAppsCached(limit);
 }
 
 export async function getVersionsForApp(
@@ -552,25 +578,121 @@ export async function searchApps(
   return attachLatestVersions((data as App[]) ?? []);
 }
 
+export async function getSitemapApps(): Promise<
+  Pick<App, "id" | "slug" | "updated_at">[]
+> {
+  if (!supabase) return [];
+
+  const PAGE_SIZE = 500;
+  const allApps: Pick<App, "id" | "slug" | "updated_at">[] = [];
+
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("apps")
+      .select("id, slug, updated_at")
+      .eq("status", "active")
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      console.error("Sitemap apps loading error:", error);
+      break;
+    }
+
+    const batch =
+      (data ?? []) as Pick<App, "id" | "slug" | "updated_at">[];
+
+    allApps.push(...batch);
+
+    if (batch.length < PAGE_SIZE) {
+      break;
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  return allApps;
+}
+
+export async function getSitemapVersions(): Promise<
+  Pick<Version, "app_id" | "version_name" | "release_date">[]
+> {
+  if (!supabase) return [];
+
+  const PAGE_SIZE = 500;
+
+  const allVersions: Pick<
+    Version,
+    "app_id" | "version_name" | "release_date"
+  >[] = [];
+
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("versions")
+      .select("app_id, version_name, release_date")
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      console.error("Sitemap versions loading error:", error);
+      break;
+    }
+
+    const batch =
+      (data ?? []) as Pick<
+        Version,
+        "app_id" | "version_name" | "release_date"
+      >[];
+
+    allVersions.push(...batch);
+
+    if (batch.length < PAGE_SIZE) {
+      break;
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  return allVersions;
+}
 export { isSupabaseConfigured };
+
+const getTrendingAppsCached = unstable_cache(
+  async (limit: number): Promise<App[]> => {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('apps')
+      .select('*, category:categories(*)')
+      .eq('status', 'active')
+      .eq('is_trending', true)
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+
+    if (error || !data) {
+      console.error('Trending apps error:', error);
+      return [];
+    }
+
+    return attachLatestVersions((data as App[]) ?? []);
+  },
+  ['droidzyra-trending-apps'],
+  { revalidate: 60 }
+);
 
 export async function getTrendingApps(
   limit = 6
 ): Promise<App[]> {
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from('apps')
-    .select('*, category:categories(*)')
-    .eq('status', 'active')
-    .eq('is_trending', true)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
-
-  if (error || !data) {
-    console.error('Trending apps error:', error);
-    return [];
-  }
-
-  return attachLatestVersions((data as App[]) ?? []);
+  return getTrendingAppsCached(limit);
 }
+
+
+
+
+
+
+

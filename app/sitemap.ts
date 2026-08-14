@@ -1,15 +1,18 @@
 import type { MetadataRoute } from 'next';
+
 import {
-  getApps,
-  getVersionsForApp,
+  getSitemapApps,
+  getSitemapVersions,
   getCategories,
 } from '@/lib/data';
+
 import { guides } from '@/lib/guides';
 import { siteConfig } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ apps }, categories] = await Promise.all([
-    getApps({ limit: 1000 }),
+  const [apps, versions, categories] = await Promise.all([
+    getSitemapApps(),
+    getSitemapVersions(),
     getCategories(),
   ]);
 
@@ -101,27 +104,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const versionHistoryPages: MetadataRoute.Sitemap = apps.map((app) => ({
-    url: `${siteConfig.url}/apps/${app.slug}/versions`,
-    lastModified: new Date(app.updated_at),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }));
+  const versionHistoryPages: MetadataRoute.Sitemap = apps.map(
+    (app) => ({
+      url: `${siteConfig.url}/apps/${app.slug}/versions`,
+      lastModified: new Date(app.updated_at),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    })
+  );
 
-  const versionPages: MetadataRoute.Sitemap = [];
+  const appSlugMap = new Map(
+    apps.map((app) => [app.id, app.slug])
+  );
 
-  for (const app of apps) {
-    const { versions } = await getVersionsForApp(app.slug);
+  const versionPages: MetadataRoute.Sitemap = versions
+    .map((version) => {
+      const slug = appSlugMap.get(version.app_id);
 
-    for (const version of versions) {
-      versionPages.push({
-        url: `${siteConfig.url}/apps/${app.slug}/versions/${version.version_name}`,
+      if (!slug) {
+        return null;
+      }
+
+      return {
+        url: `${siteConfig.url}/apps/${slug}/versions/${version.version_name}`,
         lastModified: new Date(version.release_date),
-        changeFrequency: 'monthly',
+        changeFrequency: 'monthly' as const,
         priority: 0.6,
-      });
-    }
-  }
+      };
+    })
+    .filter(
+      (
+        item
+      ): item is NonNullable<typeof item> =>
+        item !== null
+    );
 
   return [
     ...staticPages,
@@ -132,6 +148,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...versionPages,
   ];
 }
-
-
-

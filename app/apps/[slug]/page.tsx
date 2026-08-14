@@ -774,7 +774,7 @@ function AppHeader({
               <Button asChild className="h-11 rounded-xl px-5 shadow-md shadow-primary/15">
                 <Link href={`/apps/${app.slug}/versions/${latest.version_name}`}>
                   <History className="mr-2 h-4 w-4" />
-                  Download APK
+                  View Download Options
                 </Link>
               </Button>
             )}
@@ -1057,6 +1057,7 @@ function Section({
     </section>
   );
 }
+
 
 
 
