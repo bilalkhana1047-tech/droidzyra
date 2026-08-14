@@ -7,6 +7,17 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { BackLink } from "@/components/shared/back-link";
 import { DownloadCountdown } from "@/components/download/download-countdown";
 
+function isSafeDownloadUrl(value: string | null): boolean {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: "Preparing Download | DroidZyra",
@@ -28,9 +39,11 @@ export default async function DownloadPage({
     params.version
   );
 
-  if (!app || !version || !version.custom_download_url) {
+  if (!app || !version || !isSafeDownloadUrl(version.custom_download_url)) {
     notFound();
   }
+
+  const downloadUrl = version.custom_download_url as string;
 
   return (
     <main className="relative min-h-[75vh] overflow-hidden">
@@ -76,12 +89,15 @@ export default async function DownloadPage({
           <DownloadCountdown
             appName={app.name}
             versionName={version.version_name}
-            downloadUrl={version.custom_download_url}
+            downloadUrl={downloadUrl}
           />
         </div>
       </Container>
     </main>
   );
 }
+
+
+
 
 
