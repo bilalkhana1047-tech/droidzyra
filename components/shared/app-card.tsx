@@ -5,11 +5,11 @@ import type { App } from '@/lib/types';
 import { AppIcon, StatusBadge } from '@/components/shared/badges';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatDate, isRecentlyUpdated, androidVersionName } from '@/lib/format';
+import { formatDate, androidVersionName } from '@/lib/format';
 
 export function AppCard({ app, className }: { app: App; className?: string }) {
   const latest = app.latest_version;
-  const recent = latest ? isRecentlyUpdated(latest.release_date, 30) : false;
+  const recent = false;
 
   return (
     <Link href={`/apps/${app.slug}`} className="block group h-full">
@@ -84,4 +84,5 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
 }
 
 export { androidVersionName };
+
 
