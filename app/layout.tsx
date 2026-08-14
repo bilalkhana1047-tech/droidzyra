@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { siteConfig } from '@/lib/site';
+import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <GoogleAnalytics />
       </body>
     </html>
   );
