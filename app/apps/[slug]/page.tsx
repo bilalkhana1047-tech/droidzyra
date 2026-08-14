@@ -770,10 +770,23 @@ function AppHeader({
           )}
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button asChild className="h-11 rounded-xl px-5 shadow-md shadow-primary/15">
+            {latest && (
+              <Button asChild className="h-11 rounded-xl px-5 shadow-md shadow-primary/15">
+                <Link href={`/apps/${app.slug}/versions/${latest.version_name}`}>
+                  <History className="mr-2 h-4 w-4" />
+                  Download APK
+                </Link>
+              </Button>
+            )}
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-xl bg-background/70 px-5 backdrop-blur"
+            >
               <Link href={`/apps/${app.slug}/versions`}>
                 <History className="mr-2 h-4 w-4" />
-                View Versions
+                View All Versions
               </Link>
             </Button>
 

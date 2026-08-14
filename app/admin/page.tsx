@@ -1917,6 +1917,27 @@ const [versionLoading, setVersionLoading] = useState(false);
                     </button>
 
                     <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = `/admin/screenshots/${app.id}`;
+                      }}
+                      disabled={loading || versionLoading}
+                      style={{
+                        height: "34px",
+                        padding: "0 12px",
+                        borderRadius: "9px",
+                        border: "1px solid #ddd6fe",
+                        background: "#f5f3ff",
+                        color: "#7c3aed",
+                        fontSize: "10px",
+                        fontWeight: 750,
+                        boxShadow: "0 2px 5px rgba(124,58,237,.06)",
+                      }}
+                    >
+                      ▧ Screenshots
+                    </button>
+
+                    <button
                       className="edit-button"
                       onClick={() => startEditApp(app)}
                       disabled={loading || versionLoading}
