@@ -9,7 +9,7 @@ export function StatusBadge({ status }: { status: AppStatus }) {
   const map: Record<AppStatus, { label: string; className: string }> = {
     active: {
       label: 'Active',
-      className: 'border-success/30 bg-success/10 text-success',
+      className: 'border-emerald-300 bg-emerald-50 text-emerald-800',
     },
     beta: {
       label: 'Beta',
@@ -32,7 +32,7 @@ export function VerificationBadge({ verified }: { verified: boolean }) {
   return verified ? (
     <Badge
       variant="outline"
-      className="gap-1 border-success/30 bg-success/10 text-success"
+      className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-800"
     >
       <CheckCircle2 className="h-3 w-3" />
       Verified
@@ -80,7 +80,7 @@ export function CompatibilityBadge({ status }: { status: CompatibilityStatus }) 
     compatible: {
       label: 'Compatible',
       icon: <CheckCircle2 className="h-3 w-3" />,
-      className: 'border-success/30 bg-success/10 text-success',
+      className: 'border-emerald-300 bg-emerald-50 text-emerald-800',
     },
     limited: {
       label: 'Limited',
@@ -145,4 +145,5 @@ export function AppIcon({
     </div>
   );
 }
+
 

@@ -70,7 +70,7 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
             {recent && (
               <Badge
                 variant="outline"
-                className="text-[11px] gap-1 border-success/30 bg-success/10 text-success"
+                className="text-[11px] gap-1 border-emerald-300 bg-emerald-50 text-emerald-800"
               >
                 <Sparkles className="h-3 w-3" />
                 Recently updated
@@ -84,3 +84,4 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
 }
 
 export { androidVersionName };
+

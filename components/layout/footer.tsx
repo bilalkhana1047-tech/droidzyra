@@ -42,7 +42,7 @@ export function Footer() {
               </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-500">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-400">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-violet-400" />
                 Version history
@@ -164,12 +164,12 @@ export function Footer() {
 
         <div className="mt-8 border-t border-white/[0.08] pt-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-400">
               © {new Date().getFullYear()} DroidZyra. All
               rights reserved.
             </p>
 
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
               <Sparkles className="h-3.5 w-3.5 text-violet-400" />
               Built for Android users worldwide.
             </div>
@@ -179,6 +179,7 @@ export function Footer() {
     </footer>
   );
 }
+
 
 
 

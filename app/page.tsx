@@ -303,7 +303,7 @@ function TrendingApps({
               key={app.id}
               className="group relative rounded-[22px] border border-border/60 bg-background/90 p-1 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/20 hover:shadow-xl"
             >
-              <div className="absolute right-4 top-4 z-10 rounded-full bg-orange-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+              <div className="absolute right-4 top-4 z-10 rounded-full bg-orange-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
                 Trending
               </div>
 
@@ -642,7 +642,7 @@ function HowItWorks() {
                     <step.icon className="h-5 w-5" />
                   </div>
 
-                  <span className="text-3xl font-black tracking-tight text-primary/10 transition-colors group-hover:text-primary/20">
+                  <span className="text-3xl font-black tracking-tight text-primary/60 transition-colors group-hover:text-primary/80">
                     {step.number}
                   </span>
                 </div>
@@ -939,6 +939,7 @@ function SectionHeader({
     </div>
   );
 }
+
 
 
 
