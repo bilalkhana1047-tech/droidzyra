@@ -183,7 +183,7 @@ export default async function AppDetailPage({
     )
     .slice(0, 3);
 
-  const pageUrl = `https://droidzyra.app/apps/${app.slug}`;
+  const pageUrl = `https://droidzyra.com/apps/${app.slug}`;
 
   const description =
     app.description ??
@@ -1057,6 +1057,7 @@ function Section({
     </section>
   );
 }
+
 
 
 

@@ -6,7 +6,7 @@ export const siteConfig = {
   description:
     'Discover Android apps, compare app versions, check Android compatibility, explore version history and find trusted download sources.',
 
-  url: 'https://droidzyra.app',
+  url: 'https://droidzyra.com',
 
   heroHeadline: 'Find the Right App. Right Version.',
 
@@ -102,4 +102,5 @@ export const androidVersions = [
   '15.0',
   '16.0',
 ];
+
 
