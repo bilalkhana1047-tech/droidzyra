@@ -18,6 +18,7 @@ export function formatDate(date: string | Date): string {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   });
 }
 
@@ -47,3 +48,4 @@ export function androidVersionName(version: string): string {
   };
   return map[version] ?? `Android ${version}`;
 }
+
