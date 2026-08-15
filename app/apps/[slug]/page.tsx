@@ -300,6 +300,11 @@ export default async function AppDetailPage({
                           'No description available.'}
                       </p>
 
+                      <p className="mt-4 text-xs leading-5 text-muted-foreground/80">
+                        {app.name} and its logo are trademarks of their respective owner.
+                        DroidZyra is not affiliated with or endorsed by {app.name}.
+                      </p>
+
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         <InfoMiniCard
                           label="Developer"
@@ -1058,6 +1063,7 @@ function Section({
     </section>
   );
 }
+
 
 
 
