@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -10,7 +10,7 @@ import {
   Trash2,
   Save,
   X,
-} from "lucide-react";
+  Upload,} from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import type { Screenshot } from "@/lib/types";
@@ -25,12 +25,16 @@ type ScreenshotForm = {
   image_url: string;
   alt_text: string;
   sort_order: string;
+  image_width: string;
+  image_height: string;
 };
 
 const emptyForm: ScreenshotForm = {
   image_url: "",
   alt_text: "",
   sort_order: "0",
+  image_width: "",
+  image_height: "",
 };
 
 export default function AdminScreenshotsPage({
@@ -47,6 +51,7 @@ export default function AdminScreenshotsPage({
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -81,7 +86,7 @@ export default function AdminScreenshotsPage({
 
         supabase
           .from("screenshots")
-          .select("id, app_id, image_url, alt_text, sort_order")
+          .select("id, app_id, image_url, alt_text, sort_order, image_width, image_height")
           .eq("app_id", params.appId)
           .order("sort_order", { ascending: true }),
       ]);
@@ -128,6 +133,8 @@ export default function AdminScreenshotsPage({
       image_url: "",
       alt_text: "",
       sort_order: String(nextOrder),
+      image_width: "",
+      image_height: "",
     });
 
     setError("");
@@ -142,6 +149,14 @@ export default function AdminScreenshotsPage({
       image_url: item.image_url,
       alt_text: item.alt_text ?? "",
       sort_order: String(item.sort_order ?? 0),
+      image_width:
+        item.image_width != null
+          ? String(item.image_width)
+          : "",
+      image_height:
+        item.image_height != null
+          ? String(item.image_height)
+          : "",
     });
 
     setError("");
@@ -154,6 +169,134 @@ export default function AdminScreenshotsPage({
     setShowForm(false);
     setForm(emptyForm);
     setError("");
+  }
+  function readImageDimensions(
+    file: File
+  ): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+
+      image.onload = () => {
+        const width = image.naturalWidth;
+        const height = image.naturalHeight;
+
+        URL.revokeObjectURL(objectUrl);
+
+        resolve({ width, height });
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        reject(
+          new Error("Unable to read image dimensions.")
+        );
+      };
+
+      image.src = objectUrl;
+    });
+  }
+
+  function getImageExtension(file: File) {
+    if (file.type === "image/jpeg") return "jpg";
+    if (file.type === "image/png") return "png";
+    if (file.type === "image/webp") return "webp";
+
+    return null;
+  }
+
+  async function uploadScreenshotFile(file: File) {
+    if (!supabase || !app) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError(
+        "Only JPG, PNG and WebP images are allowed."
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be 5 MB or smaller.");
+      return;
+    }
+
+    const extension = getImageExtension(file);
+
+    if (!extension) {
+      setError("Unsupported image type.");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const { width, height } =
+        await readImageDimensions(file);
+
+      const fileName =
+        `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+      const storagePath =
+        `screenshots/${app.id}/${fileName}`;
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from("app-media")
+          .upload(storagePath, file, {
+            cacheControl: "31536000",
+            contentType: file.type,
+            upsert: false,
+          });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      setForm((current) => ({
+        ...current,
+        image_url: `/media/${storagePath}`,
+        image_width: String(width),
+        image_height: String(height),
+        alt_text:
+          current.alt_text.trim() ||
+          `${app.name} Android app screenshot`,
+      }));
+
+      setSuccess(
+        "Image uploaded. Review the details and save the screenshot."
+      );
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to upload image."
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleScreenshotFileChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!file) return;
+
+    await uploadScreenshotFile(file);
   }
   async function saveScreenshot(
     event: FormEvent<HTMLFormElement>
@@ -168,18 +311,44 @@ export default function AdminScreenshotsPage({
       setError("Screenshot URL is required.");
       return;
     }
-
-    try {
-      new URL(imageUrl);
-    } catch {
-      setError("Please enter a valid screenshot URL.");
-      return;
+    if (!imageUrl.startsWith("/media/")) {
+      try {
+        new URL(imageUrl);
+      } catch {
+        setError("Please enter a valid screenshot URL.");
+        return;
+      }
     }
 
     const sortOrder = Number(form.sort_order);
 
     if (!Number.isFinite(sortOrder) || sortOrder < 0) {
       setError("Sort order must be 0 or greater.");
+      return;
+    }
+    const imageWidth =
+      form.image_width.trim() === ""
+        ? null
+        : Number(form.image_width);
+
+    const imageHeight =
+      form.image_height.trim() === ""
+        ? null
+        : Number(form.image_height);
+
+    if (
+      imageWidth !== null &&
+      (!Number.isFinite(imageWidth) || imageWidth <= 0)
+    ) {
+      setError("Image width must be greater than 0.");
+      return;
+    }
+
+    if (
+      imageHeight !== null &&
+      (!Number.isFinite(imageHeight) || imageHeight <= 0)
+    ) {
+      setError("Image height must be greater than 0.");
       return;
     }
 
@@ -192,6 +361,14 @@ export default function AdminScreenshotsPage({
       image_url: imageUrl,
       alt_text: form.alt_text.trim() || null,
       sort_order: Math.floor(sortOrder),
+      image_width:
+        imageWidth === null
+          ? null
+          : Math.floor(imageWidth),
+      image_height:
+        imageHeight === null
+          ? null
+          : Math.floor(imageHeight),
     };
 
     try {
@@ -465,6 +642,55 @@ export default function AdminScreenshotsPage({
                       color: "#344054",
                     }}
                   >
+                    Upload from Computer / Gallery
+                  </label>
+
+                  <label
+                    style={{
+                      width: "100%",
+                      minHeight: "76px",
+                      border: "1px dashed #a5b4fc",
+                      borderRadius: "10px",
+                      background: "#f5f7ff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      cursor: uploading
+                        ? "not-allowed"
+                        : "pointer",
+                      color: "#4f46e5",
+                      fontSize: "13px",
+                      fontWeight: 750,
+                      boxSizing: "border-box",
+                      marginBottom: "16px",
+                      opacity: uploading ? 0.65 : 1,
+                    }}
+                  >
+                    <Upload size={18} />
+
+                    {uploading
+                      ? "Uploading image..."
+                      : "Choose JPG, PNG or WebP"}
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleScreenshotFileChange}
+                      disabled={uploading || saving}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "7px",
+                      fontSize: "12px",
+                      fontWeight: 750,
+                      color: "#344054",
+                    }}
+                  >
                     Image URL *
                   </label>
 
@@ -511,6 +737,85 @@ export default function AdminScreenshotsPage({
                         sort_order: e.target.value,
                       })
                     }
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      borderRadius: "9px",
+                      border: "1px solid #d0d5dd",
+                      padding: "0 12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "16px",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "16px",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "7px",
+                      fontSize: "12px",
+                      fontWeight: 750,
+                      color: "#344054",
+                    }}
+                  >
+                    Image Width (px)
+                  </label>
+
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.image_width}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        image_width: e.target.value,
+                      })
+                    }
+                    placeholder="1080"
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      borderRadius: "9px",
+                      border: "1px solid #d0d5dd",
+                      padding: "0 12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "7px",
+                      fontSize: "12px",
+                      fontWeight: 750,
+                      color: "#344054",
+                    }}
+                  >
+                    Image Height (px)
+                  </label>
+
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.image_height}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        image_height: e.target.value,
+                      })
+                    }
+                    placeholder="1920"
                     style={{
                       width: "100%",
                       height: "42px",
@@ -802,3 +1107,4 @@ export default function AdminScreenshotsPage({
     </main>
   );
 }
+

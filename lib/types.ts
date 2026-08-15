@@ -78,6 +78,8 @@ export interface Screenshot {
   image_url: string;
   alt_text: string | null;
   sort_order: number;
+  image_width: number | null;
+  image_height: number | null;
 }
 
 export interface AppDetail extends App {
@@ -85,6 +87,7 @@ export interface AppDetail extends App {
   screenshots: Screenshot[];
   compatibility: CompatibilityRecord[];
 }
+
 
 
 
