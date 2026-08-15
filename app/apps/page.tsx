@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getApps, getCategories } from '@/lib/data';
 import { AppsDirectoryClient } from '@/components/apps/apps-directory-client';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'App Directory',
   description:
