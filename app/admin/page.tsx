@@ -19,12 +19,20 @@ type Activity = {
   status: string;
 };
 
+type CategoryItem = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+};
+
 type AppItem = {
   id: string;
   name: string;
   slug: string;
   developer: string;
   package_name: string;
+  category_id: string | null;
   icon_url: string | null;
   description: string | null;
   official_url: string | null;
@@ -41,6 +49,7 @@ type AppForm = {
   slug: string;
   developer: string;
   package_name: string;
+  category_id: string;
   description: string;
   icon_url: string;
   official_url: string;
@@ -135,6 +144,7 @@ const emptyApp: AppForm = {
   slug: "",
   developer: "",
   package_name: "",
+  category_id: "",
   description: "",
   icon_url: "",
   official_url: "",
@@ -182,6 +192,12 @@ export default function AdminPage() {
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
 
   const [newApp, setNewApp] = useState<AppForm>(emptyApp);
+
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [selectedAppForVersions, setSelectedAppForVersions] =
   useState<AppItem | null>(null);
 
@@ -238,7 +254,7 @@ const [versionLoading, setVersionLoading] = useState(false);
     let query = supabase
       .from("apps")
       .select(
-        "id, name, slug, developer, package_name, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at",
+        "id, name, slug, developer, package_name, category_id, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at",
         { count: "exact" }
       );
 
@@ -683,8 +699,92 @@ const newActivities: Activity[] = [];
 
   useEffect(() => {
     loadDashboard();
+    loadCategories();
   }, []);
 
+  async function loadCategories() {
+    if (!supabase) return;
+
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, description")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Category loading error:", error);
+      setErrorMessage(error.message);
+      return;
+    }
+
+    setCategories((data ?? []) as CategoryItem[]);
+  }
+
+  function makeCategorySlug(value: string) {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  async function createCategory() {
+    if (!supabase) {
+      setErrorMessage("Supabase is not configured.");
+      return;
+    }
+
+    const name = newCategoryName.trim();
+    const slug = makeCategorySlug(name);
+
+    if (!name) {
+      setErrorMessage("Category name is required.");
+      return;
+    }
+
+    if (!slug) {
+      setErrorMessage("Please enter a valid category name.");
+      return;
+    }
+
+    setCategoryLoading(true);
+    setErrorMessage("");
+
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert({
+          name,
+          slug,
+          description: newCategoryDescription.trim() || null,
+        })
+        .select("id, name, slug, description")
+        .single();
+
+      if (error) {
+        console.error("Create category error:", error);
+        setErrorMessage(error.message);
+        return;
+      }
+
+      const created = data as CategoryItem;
+
+      await loadCategories();
+
+      setNewApp((current) => ({
+        ...current,
+        category_id: created.id,
+      }));
+
+      setNewCategoryName("");
+      setNewCategoryDescription("");
+      setShowAddCategory(false);
+    } catch (error) {
+      console.error("Create category error:", error);
+      setErrorMessage("Unable to create category.");
+    } finally {
+      setCategoryLoading(false);
+    }
+  }
   function resetAppForm() {
     setNewApp({ ...emptyApp });
     setEditingAppId(null);
@@ -705,6 +805,7 @@ const newActivities: Activity[] = [];
       slug: app.slug || "",
       developer: app.developer || "",
       package_name: app.package_name || "",
+      category_id: app.category_id ?? "",
       description: app.description ?? "",
       icon_url: app.icon_url ?? "",
       official_url: app.official_url ?? "",
@@ -751,6 +852,7 @@ const newActivities: Activity[] = [];
         slug: newApp.slug.trim(),
         developer: newApp.developer.trim(),
         package_name: newApp.package_name.trim(),
+          category_id: newApp.category_id || null,
         description: newApp.description.trim() || null,
         icon_url: newApp.icon_url.trim() || null,
         official_url: newApp.official_url.trim() || null,
@@ -807,6 +909,7 @@ const newActivities: Activity[] = [];
           slug: newApp.slug.trim(),
           developer: newApp.developer.trim(),
           package_name: newApp.package_name.trim(),
+          category_id: newApp.category_id || null,
           description: newApp.description.trim() || null,
           icon_url: newApp.icon_url.trim() || null,
           official_url: newApp.official_url.trim() || null,
@@ -1294,6 +1397,110 @@ const newActivities: Activity[] = [];
                   placeholder="com.whatsapp"
                 />
               </div>
+              <div className="form-field">
+                <label>Category</label>
+
+                <select
+                  value={newApp.category_id}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      category_id: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">No category</option>
+
+                  {categories.map((category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowAddCategory((current) => !current)
+                  }
+                  style={{
+                    marginTop: "8px",
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    color: "#4f46e5",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {showAddCategory
+                    ? "Cancel New Category"
+                    : "+ Add New Category"}
+                </button>
+              </div>
+
+              {showAddCategory && (
+                <div
+                  className="form-field"
+                  style={{
+                    gridColumn: "1 / -1",
+                    padding: "16px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "12px",
+                    background: "#f9fafb",
+                  }}
+                >
+                  <label>New Category Name *</label>
+
+                  <input
+                    value={newCategoryName}
+                    onChange={(e) =>
+                      setNewCategoryName(e.target.value)
+                    }
+                    placeholder="Casino & Betting"
+                  />
+
+                  <label style={{ marginTop: "12px" }}>
+                    Slug
+                  </label>
+
+                  <input
+                    value={makeCategorySlug(newCategoryName)}
+                    readOnly
+                    placeholder="casino-betting"
+                  />
+
+                  <label style={{ marginTop: "12px" }}>
+                    Description
+                  </label>
+
+                  <textarea
+                    value={newCategoryDescription}
+                    onChange={(e) =>
+                      setNewCategoryDescription(e.target.value)
+                    }
+                    rows={3}
+                    placeholder="Short description for this category."
+                  />
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={createCategory}
+                    disabled={categoryLoading}
+                    style={{ marginTop: "12px" }}
+                  >
+                    {categoryLoading
+                      ? "Creating..."
+                      : "Create Category"}
+                  </button>
+                </div>
+              )}
+
 
               <div className="form-field">
                 <label>Status</label>
@@ -4343,6 +4550,9 @@ const newActivities: Activity[] = [];
     </div>
   );
 }
+
+
+
 
 
 
