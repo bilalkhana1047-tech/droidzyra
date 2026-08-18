@@ -18,9 +18,14 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'play-lh.googleusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'share.google',
+      },
     ],
   },
 };
 
 module.exports = nextConfig;
+
 

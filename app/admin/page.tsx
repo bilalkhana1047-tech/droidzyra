@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import "./admin-theme.css";
 
@@ -192,6 +192,7 @@ export default function AdminPage() {
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
 
   const [newApp, setNewApp] = useState<AppForm>(emptyApp);
+  const [iconUploading, setIconUploading] = useState(false);
 
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -825,6 +826,102 @@ const newActivities: Activity[] = [];
     setErrorMessage("");
   }
 
+  async function uploadAppIcon(file: File) {
+    if (!supabase) {
+      setErrorMessage("Supabase is not configured.");
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage(
+        "Please choose a JPG, PNG or WebP image."
+      );
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      setErrorMessage(
+        "App icon must be 2 MB or smaller."
+      );
+      return;
+    }
+
+    setIconUploading(true);
+    setErrorMessage("");
+
+    try {
+      const extension =
+        file.name
+          .split(".")
+          .pop()
+          ?.toLowerCase()
+          .replace(/[^a-z0-9]/g, "") || "png";
+
+      const safeSlug =
+        newApp.slug
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9-]+/g, "-")
+          .replace(/^-+|-+$/g, "") ||
+        "app";
+
+      const uniqueName =
+        `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+      const storagePath =
+        `icons/${safeSlug}/${uniqueName}`;
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from("app-media")
+          .upload(storagePath, file, {
+            cacheControl: "31536000",
+            upsert: false,
+            contentType: file.type,
+          });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const mediaUrl = `/media/${storagePath}`;
+
+      setNewApp((current) => ({
+        ...current,
+        icon_url: mediaUrl,
+      }));
+    } catch (error) {
+      console.error("App icon upload error:", error);
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to upload app icon."
+      );
+    } finally {
+      setIconUploading(false);
+    }
+  }
+
+  async function handleAppIconChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    await uploadAppIcon(file);
+
+    event.target.value = "";
+  }
   async function createApp() {
     if (!supabase) {
       setErrorMessage("Supabase is not configured.");
@@ -1574,19 +1671,158 @@ const newActivities: Activity[] = [];
                 />
               </div>
 
-              <div className="form-field">
-                <label>Icon URL</label>
+                            <div className="form-field full-width">
+                <label>App Icon</label>
 
-                <input
-                  value={newApp.icon_url}
-                  onChange={(e) =>
-                    setNewApp({
-                      ...newApp,
-                      icon_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://example.com/icon.png"
-                />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "minmax(0, 1fr) minmax(140px, 180px)",
+                    gap: "16px",
+                    alignItems: "start",
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        minHeight: "84px",
+                        border: "1px dashed #a5b4fc",
+                        borderRadius: "12px",
+                        background: "#f5f7ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textAlign: "center",
+                        padding: "14px",
+                        cursor: iconUploading
+                          ? "not-allowed"
+                          : "pointer",
+                        color: "#4f46e5",
+                        fontWeight: 700,
+                        fontSize: "13px",
+                        boxSizing: "border-box",
+                        opacity: iconUploading ? 0.65 : 1,
+                      }}
+                    >
+                      {iconUploading
+                        ? "Uploading icon..."
+                        : "Upload from Computer / Gallery"}
+
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleAppIconChange}
+                        disabled={iconUploading || loading}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+
+                    <div
+                      style={{
+                        margin: "12px 0",
+                        textAlign: "center",
+                        color: "#98a2b3",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      OR
+                    </div>
+
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "7px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#344054",
+                      }}
+                    >
+                      Icon URL
+                    </label>
+
+                    <input
+                      value={newApp.icon_url}
+                      onChange={(e) =>
+                        setNewApp({
+                          ...newApp,
+                          icon_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://example.com/icon.png"
+                    />
+
+                    {newApp.icon_url.startsWith("/media/") && (
+                      <p
+                        style={{
+                          margin: "7px 0 0",
+                          fontSize: "11px",
+                          color: "#15803d",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Stored on DroidZyra media.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "7px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#344054",
+                      }}
+                    >
+                      Preview
+                    </label>
+
+                    <div
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                        borderRadius: "24px",
+                        border: "1px solid #eaecf0",
+                        background: "#f2f4f7",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {newApp.icon_url ? (
+                        <img
+                          src={newApp.icon_url}
+                          alt={
+                            newApp.name
+                              ? `${newApp.name} icon preview`
+                              : "App icon preview"
+                          }
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            color: "#98a2b3",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            textAlign: "center",
+                            padding: "10px",
+                          }}
+                        >
+                          No icon selected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="form-field full-width">
@@ -4550,6 +4786,8 @@ const newActivities: Activity[] = [];
     </div>
   );
 }
+
+
 
 
 

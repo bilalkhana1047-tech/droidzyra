@@ -124,14 +124,41 @@ export function AppIcon({
     .join('')
     .toUpperCase();
   if (src) {
+    const isLocalMedia =
+      src.startsWith('/media/') ||
+      src.startsWith('/');
+
+    if (isLocalMedia) {
+      return (
+        <Image
+          src={src}
+          alt={alt}
+          width={size}
+          height={size}
+          priority={priority}
+          className={cn(
+            'rounded-xl object-cover',
+            className
+          )}
+        />
+      );
+    }
+
     return (
-      <Image
+      <img
         src={src}
         alt={alt}
         width={size}
         height={size}
-      priority={priority}
-      className={cn('rounded-xl object-cover', className)}
+        loading={priority ? 'eager' : 'lazy'}
+        className={cn(
+          'rounded-xl object-cover',
+          className
+        )}
+        style={{
+          width: size,
+          height: size,
+        }}
       />
     );
   }
