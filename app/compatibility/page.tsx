@@ -113,12 +113,44 @@ export default function CompatibilityPage() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("compatibility")
-      .select(
+    try {
+      // 1. First prefer a manually verified compatibility record.
+      const { data: manualRecord, error: manualError } = await supabase
+        .from("compatibility")
+        .select(
+          `
+          *,
+          version:versions(
+            id,
+            version_name,
+            version_code,
+            min_android,
+            target_android,
+            release_date,
+            file_size,
+            architecture
+          )
         `
-        *,
-        version:versions(
+        )
+        .eq("app_id", selectedApp)
+        .eq("android_version", androidVersion)
+        .maybeSingle();
+
+      if (manualError) {
+        console.error("Manual compatibility lookup failed:", manualError);
+      }
+
+      if (manualRecord) {
+        setResult(manualRecord as CompatibilityRecord);
+        setChecking(false);
+        return;
+      }
+
+      // 2. No manual record: load all available versions for this app.
+      const { data: versions, error: versionsError } = await supabase
+        .from("versions")
+        .select(
+          `
           id,
           version_name,
           version_code,
@@ -127,32 +159,133 @@ export default function CompatibilityPage() {
           release_date,
           file_size,
           architecture
+        `
         )
-      `
-      )
-      .eq("app_id", selectedApp)
-      .eq("android_version", androidVersion)
-      .maybeSingle();
+        .eq("app_id", selectedApp)
+        .order("release_date", { ascending: false });
 
-    if (error) {
-      console.error(error);
-      setError("Unable to check compatibility right now.");
-      setChecking(false);
-      return;
-    }
+      if (versionsError) {
+        console.error(versionsError);
+        setError("Unable to check compatibility right now.");
+        setChecking(false);
+        return;
+      }
 
-    if (!data) {
+      if (!versions || versions.length === 0) {
+        setError(
+          "No version information is available for this app yet."
+        );
+        setChecking(false);
+        return;
+      }
+
+      const selectedAndroid = Number.parseFloat(androidVersion);
+
+      const parseAndroid = (value?: string | null) => {
+        if (!value) return null;
+
+        const match = String(value).match(/\d+(?:\.\d+)?/);
+        if (!match) return null;
+
+        const parsed = Number.parseFloat(match[0]);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+
+      // A version is installable when the selected Android version
+      // is equal to or newer than that version's minimum Android.
+      const compatibleVersions = versions.filter((version) => {
+        const minAndroid = parseAndroid(version.min_android);
+
+        if (minAndroid === null) {
+          return false;
+        }
+
+        return selectedAndroid >= minAndroid;
+      });
+
+      if (compatibleVersions.length > 0) {
+        // versions are already sorted newest first
+        const recommended = compatibleVersions[0];
+
+        const minAndroid = parseAndroid(recommended.min_android);
+        const targetAndroid = parseAndroid(recommended.target_android);
+
+        let notes =
+          `Version ${recommended.version_name} is the newest available version in our database whose minimum Android requirement is satisfied by Android ${androidVersion}.`;
+
+        if (
+          targetAndroid !== null &&
+          selectedAndroid > targetAndroid
+        ) {
+          notes +=
+            ` This version targets Android ${recommended.target_android}, which is older than your Android ${androidVersion}. It should meet the recorded minimum requirement, but some behavior may depend on the app developer and device.`;
+        } else if (
+          minAndroid !== null &&
+          selectedAndroid === minAndroid
+        ) {
+          notes +=
+            ` Your device meets the minimum Android requirement exactly.`;
+        }
+
+        const generatedResult: CompatibilityRecord = {
+          id: `auto-${selectedApp}-${androidVersion}`,
+          android_version: androidVersion,
+          status: "compatible",
+          notes,
+          version: recommended,
+        };
+
+        setResult(generatedResult);
+        setChecking(false);
+        return;
+      }
+
+      // 3. Versions exist, but none support this old Android version.
+      const versionsWithMinimum = versions
+        .map((version) => ({
+          version,
+          min: parseAndroid(version.min_android),
+        }))
+        .filter(
+          (
+            item
+          ): item is {
+            version: (typeof versions)[number];
+            min: number;
+          } => item.min !== null
+        )
+        .sort((a, b) => a.min - b.min);
+
+      if (versionsWithMinimum.length > 0) {
+        const closest = versionsWithMinimum[0];
+
+        const generatedResult: CompatibilityRecord = {
+          id: `auto-${selectedApp}-${androidVersion}`,
+          android_version: androidVersion,
+          status: "incompatible",
+          notes:
+            `The available versions in our database require a newer Android version. ` +
+            `The lowest recorded requirement is Android ${closest.version.min_android} ` +
+            `for version ${closest.version.version_name}.`,
+          version: closest.version,
+        };
+
+        setResult(generatedResult);
+        setChecking(false);
+        return;
+      }
+
+      // 4. Versions exist but minimum Android data is missing.
       setError(
-        `No compatibility information is available for Android ${androidVersion}.`
+        "Version data exists for this app, but minimum Android requirements have not been added yet."
       );
+    } catch (err) {
+      console.error(err);
+      setError("Unable to check compatibility right now.");
+    } finally {
       setChecking(false);
-      return;
     }
-
-    setResult(data as CompatibilityRecord);
-    setChecking(false);
   }
-
   const selectedAppData = apps.find((app) => app.id === selectedApp);
 
   const status = result?.status?.toLowerCase() || "";
