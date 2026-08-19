@@ -295,10 +295,29 @@ export default async function AppDetailPage({
                 >
                   <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
                     <CardContent className="p-6 sm:p-7">
-                      <p className="text-muted-foreground leading-7">
-                        {app.description ??
-                          'No description available.'}
-                      </p>
+                      {app.short_description && (
+                        <p className="text-base font-medium leading-7 text-foreground">
+                          {app.short_description}
+                        </p>
+                      )}
+
+                      {app.description && (
+                        <div
+                          className={
+                            app.short_description
+                              ? "mt-4 whitespace-pre-line text-muted-foreground leading-7"
+                              : "whitespace-pre-line text-muted-foreground leading-7"
+                          }
+                        >
+                          {app.description}
+                        </div>
+                      )}
+
+                      {!app.short_description && !app.description && (
+                        <p className="text-muted-foreground leading-7">
+                          No description available.
+                        </p>
+                      )}
 
                       <p className="mt-4 text-xs leading-5 text-muted-foreground/80">
                         {app.name} and its logo are trademarks of their respective owner.
@@ -345,6 +364,39 @@ export default async function AppDetailPage({
                     </CardContent>
                   </Card>
                 </Section>
+
+                {/* Key Features */}
+                {app.features?.trim() && (
+                  <Section
+                    title="Key Features"
+                    icon={<ListChecks className="h-5 w-5" />}
+                  >
+                    <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
+                      <CardContent className="p-6 sm:p-7">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {app.features
+                            .split(/\r?\n/)
+                            .map((feature) => feature.trim())
+                            .filter(Boolean)
+                            .map((feature, index) => (
+                              <div
+                                key={`${feature}-${index}`}
+                                className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-4"
+                              >
+                                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                  ✓
+                                </span>
+
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                  {feature}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Section>
+                )}
 
                 {/* Screenshots */}
                 <Section
@@ -427,6 +479,22 @@ export default async function AppDetailPage({
                             View changelog source
                           </a>
                         )}
+                      </CardContent>
+                    </Card>
+                  </Section>
+                )}
+
+                {/* Editorial Notes */}
+                {app.editorial_notes?.trim() && (
+                  <Section
+                    title="DroidZyra Notes"
+                    icon={<HelpCircle className="h-5 w-5" />}
+                  >
+                    <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
+                      <CardContent className="p-6 sm:p-7">
+                        <div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                          {app.editorial_notes}
+                        </div>
                       </CardContent>
                     </Card>
                   </Section>

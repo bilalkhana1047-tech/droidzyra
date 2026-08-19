@@ -19,6 +19,9 @@ export interface App {
   developer: string;
   package_name: string;
   description: string | null;
+  short_description: string | null;
+  features: string | null;
+  editorial_notes: string | null;
   category_id: string | null;
   icon_url: string | null;
   official_url: string | null;

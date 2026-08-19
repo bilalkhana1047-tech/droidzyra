@@ -35,6 +35,9 @@ type AppItem = {
   category_id: string | null;
   icon_url: string | null;
   description: string | null;
+  short_description: string | null;
+  features: string | null;
+  editorial_notes: string | null;
   official_url: string | null;
   seo_title: string | null;
   seo_description: string | null;
@@ -51,6 +54,9 @@ type AppForm = {
   package_name: string;
   category_id: string;
   description: string;
+  short_description: string;
+  features: string;
+  editorial_notes: string;
   icon_url: string;
   official_url: string;
   seo_title: string;
@@ -146,6 +152,9 @@ const emptyApp: AppForm = {
   package_name: "",
   category_id: "",
   description: "",
+  short_description: "",
+  features: "",
+  editorial_notes: "",
   icon_url: "",
   official_url: "",
   seo_title: "",   seo_description: "",   focus_keyword: "",
@@ -255,7 +264,7 @@ const [versionLoading, setVersionLoading] = useState(false);
     let query = supabase
       .from("apps")
       .select(
-        "id, name, slug, developer, package_name, category_id, description, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at",
+        "id, name, slug, developer, package_name, category_id, description, short_description, features, editorial_notes, icon_url, official_url, seo_title, seo_description, focus_keyword, status, is_trending, updated_at",
         { count: "exact" }
       );
 
@@ -808,6 +817,9 @@ const newActivities: Activity[] = [];
       package_name: app.package_name || "",
       category_id: app.category_id ?? "",
       description: app.description ?? "",
+      short_description: app.short_description ?? "",
+      features: app.features ?? "",
+      editorial_notes: app.editorial_notes ?? "",
       icon_url: app.icon_url ?? "",
       official_url: app.official_url ?? "",
       seo_title: app.seo_title ?? "",
@@ -951,6 +963,9 @@ const newActivities: Activity[] = [];
         package_name: newApp.package_name.trim(),
           category_id: newApp.category_id || null,
         description: newApp.description.trim() || null,
+        short_description: newApp.short_description.trim() || null,
+        features: newApp.features.trim() || null,
+        editorial_notes: newApp.editorial_notes.trim() || null,
         icon_url: newApp.icon_url.trim() || null,
         official_url: newApp.official_url.trim() || null,
           seo_title: newApp.seo_title.trim() || null,
@@ -1008,6 +1023,9 @@ const newActivities: Activity[] = [];
           package_name: newApp.package_name.trim(),
           category_id: newApp.category_id || null,
           description: newApp.description.trim() || null,
+        short_description: newApp.short_description.trim() || null,
+        features: newApp.features.trim() || null,
+        editorial_notes: newApp.editorial_notes.trim() || null,
           icon_url: newApp.icon_url.trim() || null,
           official_url: newApp.official_url.trim() || null,
           seo_title: newApp.seo_title.trim() || null,
@@ -1825,8 +1843,24 @@ const newActivities: Activity[] = [];
                 </div>
               </div>
 
+                            <div className="form-field full-width">
+                <label>Short Description</label>
+
+                <textarea
+                  value={newApp.short_description}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      short_description: e.target.value,
+                    })
+                  }
+                  placeholder="1–2 sentence summary for app cards and quick overview..."
+                  rows={3}
+                />
+              </div>
+
               <div className="form-field full-width">
-                <label>Description</label>
+                <label>About / Long Description</label>
 
                 <textarea
                   value={newApp.description}
@@ -1836,8 +1870,40 @@ const newActivities: Activity[] = [];
                       description: e.target.value,
                     })
                   }
-                  placeholder="Application description..."
-                  rows={4}
+                  placeholder="Detailed original app description..."
+                  rows={8}
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Key Features</label>
+
+                <textarea
+                  value={newApp.features}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      features: e.target.value,
+                    })
+                  }
+                  placeholder={"One feature per line, for example:\nBackground playback\nOffline caching\nAndroid Auto support"}
+                  rows={7}
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Editorial Notes</label>
+
+                <textarea
+                  value={newApp.editorial_notes}
+                  onChange={(e) =>
+                    setNewApp({
+                      ...newApp,
+                      editorial_notes: e.target.value,
+                    })
+                  }
+                  placeholder="Original DroidZyra notes: compatibility advice, source verification, limitations, useful context..."
+                  rows={6}
                 />
               </div>
 
@@ -4786,6 +4852,7 @@ const newActivities: Activity[] = [];
     </div>
   );
 }
+
 
 
 
