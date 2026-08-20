@@ -78,6 +78,7 @@ type VersionItem = {
   sha256: string | null;
   source_url: string | null;
   custom_download_url: string | null;
+  verified: boolean;
 };
 
 type VersionForm = {
@@ -91,6 +92,7 @@ type VersionForm = {
   sha256: string;
   source_url: string;
   custom_download_url: string;
+  verified: boolean;
 };
 
 const emptyVersion: VersionForm = {
@@ -104,6 +106,7 @@ const emptyVersion: VersionForm = {
   sha256: "",
   source_url: "",
   custom_download_url: "",
+  verified: false,
 };
 
 function isValidHttpsUrl(value: string) {
@@ -435,7 +438,7 @@ const newActivities: Activity[] = [];
         const { data, error } = await supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url"
+            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url, verified"
           )
           .eq("app_id", app.id)
           .order("release_date", { ascending: false });
@@ -484,6 +487,7 @@ const newActivities: Activity[] = [];
         sha256: version.sha256 ?? "",
         source_url: version.source_url ?? "",
         custom_download_url: version.custom_download_url ?? "",
+        verified: Boolean(version.verified),
       });
     
       setShowVersionForm(true);
@@ -550,6 +554,7 @@ const newActivities: Activity[] = [];
           sha256: newVersion.sha256.trim() || null,
           source_url: newVersion.source_url.trim() || null,
             custom_download_url: newVersion.custom_download_url.trim() || null,
+            verified: newVersion.verified,
         });
     
         if (error) {
@@ -624,6 +629,7 @@ const newActivities: Activity[] = [];
             sha256: newVersion.sha256.trim() || null,
             source_url: newVersion.source_url.trim() || null,
             custom_download_url: newVersion.custom_download_url.trim() || null,
+            verified: newVersion.verified,
           })
           .eq("id", editingVersionId)
           .eq("app_id", selectedAppForVersions.id);
@@ -2552,6 +2558,25 @@ const newActivities: Activity[] = [];
                   />
                   <small className="form-help">
                     Optional. This link will be used for the DroidZyra Download APK button.
+                  </small>
+                </div>
+
+                <div className="form-field full-width">
+                  <label>Verification Status</label>
+                  <select
+                    value={newVersion.verified ? "verified" : "unverified"}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        verified: e.target.value === "verified",
+                      })
+                    }
+                  >
+                    <option value="unverified">Unverified</option>
+                    <option value="verified">Verified</option>
+                  </select>
+                  <small className="form-help">
+                    Select Verified only after checking this version and its source.
                   </small>
                 </div>
               </div>
@@ -4852,6 +4877,7 @@ const newActivities: Activity[] = [];
     </div>
   );
 }
+
 
 
 

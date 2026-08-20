@@ -16,6 +16,7 @@ type VersionItem = {
   file_size: number;
   sha256: string | null;
   source_url: string | null;
+  verified: boolean;
 };
 
 type AppInfo = {
@@ -35,6 +36,7 @@ type VersionForm = {
   file_size: string;
   sha256: string;
   source_url: string;
+  verified: boolean;
 };
 
 const emptyForm: VersionForm = {
@@ -47,6 +49,7 @@ const emptyForm: VersionForm = {
   file_size: "",
   sha256: "",
   source_url: "",
+  verified: false,
 };
 
 function formatFileSize(bytes: number) {
@@ -117,7 +120,7 @@ export default function AdminVersionsPage() {
         supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url"
+            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, verified"
           )
           .eq("app_id", appId)
           .order("release_date", { ascending: false }),
@@ -184,6 +187,7 @@ export default function AdminVersionsPage() {
           : "",
       sha256: version.sha256 || "",
       source_url: version.source_url || "",
+      verified: Boolean(version.verified),
     });
 
     setShowForm(true);
@@ -244,6 +248,7 @@ export default function AdminVersionsPage() {
         file_size: Math.round(fileSize),
         sha256: form.sha256.trim() || null,
         source_url: form.source_url.trim() || null,
+        verified: form.verified,
       };
 
       if (editingVersionId) {
@@ -558,7 +563,25 @@ export default function AdminVersionsPage() {
                   placeholder="https://example.com/app.apk"
                 />
               </div>
+
+              <div className="form-field full-width">
+              <label>Verification Status</label>
+
+              <select
+                value={form.verified ? "verified" : "unverified"}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    verified: e.target.value === "verified",
+                  })
+                }
+              >
+                <option value="unverified">Unverified</option>
+                <option value="verified">Verified</option>
+              </select>
             </div>
+            </div>
+
 
             <div className="form-actions">
               <button
@@ -1102,4 +1125,5 @@ export default function AdminVersionsPage() {
     </div>
   );
 }
+
 
