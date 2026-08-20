@@ -378,7 +378,14 @@ const [versionLoading, setVersionLoading] = useState(false);
       if (versionsResult.error) {
         console.error("Versions count error:", versionsResult.error);
       }
-const newActivities: Activity[] = [];
+      setStats({
+        activeApps: activeAppsResult.count ?? 0,
+        compatibilityChecks: compatibilityResult.count ?? 0,
+        totalApps: totalAppsResult.count ?? 0,
+        totalVersions: versionsResult.count ?? 0,
+      });
+
+      const newActivities: Activity[] = [];
 
       for (const version of versionsActivityResult.data ?? []) {
         newActivities.push({
