@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/layout/logo';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/layout/container';
+import { LanguageSelector } from '@/components/i18n/language-selector';
+import { useLanguage } from '@/components/i18n/language-provider';
 
 export function Header() {
   const pathname = usePathname();
@@ -26,6 +28,15 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+
+  const { languageCode, translateMany } = useLanguage();
+
+  const [translatedNav, setTranslatedNav] = useState(
+    siteConfig.nav.map((item) => item.label)
+  );
+
+  const [translatedSearchPlaceholder, setTranslatedSearchPlaceholder] =
+    useState(siteConfig.searchPlaceholder);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -43,6 +54,47 @@ export function Header() {
     setMobileOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function translateHeader() {
+      if (languageCode === "en") {
+        setTranslatedNav(
+          siteConfig.nav.map((item) => item.label)
+        );
+
+        setTranslatedSearchPlaceholder(
+          siteConfig.searchPlaceholder
+        );
+
+        return;
+      }
+
+      const texts = [
+        ...siteConfig.nav.map((item) => item.label),
+        siteConfig.searchPlaceholder,
+      ];
+
+      const translated = await translateMany(texts);
+
+      if (cancelled) return;
+
+      setTranslatedNav(
+        translated.slice(0, siteConfig.nav.length)
+      );
+
+      setTranslatedSearchPlaceholder(
+        translated[siteConfig.nav.length] ??
+          siteConfig.searchPlaceholder
+      );
+    }
+
+    translateHeader();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [languageCode, translateMany]);
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -125,7 +177,7 @@ export function Header() {
                       {navIcon(item.label)}
                     </span>
 
-                    {item.label}
+                    {translatedNav[siteConfig.nav.indexOf(item)] ?? item.label}
 
                     {active && (
                       <span className="absolute inset-x-3 -bottom-[7px] h-0.5 rounded-full bg-gradient-to-r from-primary to-violet-500" />
@@ -150,11 +202,16 @@ export function Header() {
               onChange={(e) =>
                 setSearchValue(e.target.value)
               }
-              placeholder={siteConfig.searchPlaceholder}
+              placeholder={translatedSearchPlaceholder}
               className="h-10 w-[250px] rounded-xl border border-border/70 bg-muted/25 pl-10 pr-4 text-xs text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary/30 focus:bg-background focus:ring-4 focus:ring-primary/[0.07]"
               aria-label="Search apps"
             />
           </form>
+
+          {/* Language selector */}
+          <div className="hidden shrink-0 md:block">
+            <LanguageSelector />
+          </div>
 
           {/* Mobile button */}
           <Button
@@ -193,12 +250,16 @@ export function Header() {
                   onChange={(e) =>
                     setSearchValue(e.target.value)
                   }
-                  placeholder={siteConfig.searchPlaceholder}
+                  placeholder={translatedSearchPlaceholder}
                   className="h-11 w-full rounded-xl border border-border/70 bg-muted/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-primary/30 focus:bg-background focus:ring-4 focus:ring-primary/[0.07]"
                   aria-label="Search apps"
                 />
               </div>
             </form>
+
+            <div className="w-full">
+              <LanguageSelector fullWidth />
+            </div>
 
             <nav
               className="grid gap-1"
@@ -232,7 +293,7 @@ export function Header() {
                       {navIcon(item.label)}
                     </span>
 
-                    {item.label}
+                    {translatedNav[siteConfig.nav.indexOf(item)] ?? item.label}
                   </Link>
                 );
               })}
@@ -243,3 +304,5 @@ export function Header() {
     </header>
   );
 }
+
+

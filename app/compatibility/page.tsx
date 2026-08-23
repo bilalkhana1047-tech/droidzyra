@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { TranslatedText } from "@/components/i18n/translated-text";
 
 type App = {
   id: string;
@@ -306,11 +307,11 @@ export default function CompatibilityPage() {
         {/* Header */}
         <div className="mb-10 text-center">
           <div className="mb-4 inline-flex rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-sm text-blue-300">
-            Android Compatibility Checker
+            <TranslatedText text="Android Compatibility Checker" />
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Compatibility Finder
+            <TranslatedText text="Compatibility Finder" />
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-slate-400">
@@ -325,7 +326,7 @@ export default function CompatibilityPage() {
             {/* App */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-300">
-                Select App
+                <TranslatedText text="Select App" />
               </label>
 
               <input
@@ -360,7 +361,7 @@ export default function CompatibilityPage() {
 
               {!loadingApps && apps.length === 0 && !error && (
                 <p className="mt-2 text-sm text-slate-500">
-                  No active apps found.
+                  <TranslatedText text="No active apps found." />
                 </p>
               )}
             </div>
@@ -368,7 +369,7 @@ export default function CompatibilityPage() {
             {/* Android */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-300">
-                Android Version
+                <TranslatedText text="Android Version" />
               </label>
 
               <select
@@ -388,7 +389,7 @@ export default function CompatibilityPage() {
               </select>
 
               <p className="mt-2 text-xs text-slate-500">
-                Select the Android version installed on your device.
+                <TranslatedText text="Select the Android version installed on your device." />
               </p>
             </div>
           </div>
@@ -415,7 +416,7 @@ export default function CompatibilityPage() {
           {/* Error */}
           {error && (
             <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
-              {error}
+              <TranslatedText text={error} />
             </div>
           )}
 
@@ -425,7 +426,11 @@ export default function CompatibilityPage() {
             disabled={checking || !selectedApp}
             className="mt-6 w-full rounded-xl bg-blue-600 px-5 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {checking ? "Checking compatibility..." : "Check Compatibility"}
+            {checking ? (
+              <TranslatedText text="Checking compatibility..." />
+            ) : (
+              <TranslatedText text="Check Compatibility" />
+            )}
           </button>
         </div>
 
@@ -443,7 +448,7 @@ export default function CompatibilityPage() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-slate-400">Compatibility Result</p>
+                  <p className="text-sm text-slate-400"><TranslatedText text="Compatibility Result" /></p>
 
                   <h2 className="mt-1 text-2xl font-bold">
                     {isCompatible
@@ -455,7 +460,7 @@ export default function CompatibilityPage() {
                 </div>
 
                 <span className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium capitalize">
-                  {result.status}
+                  <TranslatedText text={result.status} />
                 </span>
               </div>
             </div>
@@ -503,11 +508,11 @@ export default function CompatibilityPage() {
             {result.notes && (
               <div className="border-t border-slate-800 px-6 py-5">
                 <p className="mb-2 text-sm font-medium text-slate-300">
-                  Additional Information
+                  <TranslatedText text="Additional Information" />
                 </p>
 
                 <p className="text-sm leading-6 text-slate-400">
-                  {result.notes}
+                  <TranslatedText text={result.notes} />
                 </p>
               </div>
             )}
@@ -535,3 +540,4 @@ function InfoItem({
     </div>
   );
 }
+

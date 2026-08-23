@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { siteConfig } from '@/lib/site';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { LanguageProvider } from '@/components/i18n/language-provider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -57,11 +58,14 @@ export default function RootLayout({
   />
 </head>
       <body className="min-h-screen flex flex-col font-sans">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <GoogleAnalytics />
+        <LanguageProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <GoogleAnalytics />
+        </LanguageProvider>
       </body>
     </html>
   );
 }
+

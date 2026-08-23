@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Breadcrumbs } from '@/components/layout/breadcrumbs';
 import { Container } from '@/components/layout/container';
 import type { App, Category } from '@/lib/types';
+import { TranslatedText } from '@/components/i18n/translated-text';
 
 
 export function AppsDirectoryClient({
@@ -122,7 +123,7 @@ export function AppsDirectoryClient({
               <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  {total} apps available
+                  {total} <TranslatedText text="apps available" />
                 </span>
 
                 <span className="flex items-center gap-1.5">
@@ -132,7 +133,7 @@ export function AppsDirectoryClient({
 
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  Search & filter
+                  <TranslatedText text="Search & filter" />
                 </span>
               </div>
             </div>
@@ -171,7 +172,7 @@ export function AppsDirectoryClient({
                       </h2>
 
                       <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        Search and filter the directory
+                        <TranslatedText text="Search and filter the directory" />
                       </p>
                     </div>
                   </div>
@@ -179,7 +180,7 @@ export function AppsDirectoryClient({
 
                 <div className="p-4">
                   <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                    Search
+                    <TranslatedText text="Search" />
                   </label>
 
                   <div className="relative">
@@ -229,7 +230,7 @@ export function AppsDirectoryClient({
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
-                      <span className="font-medium">All categories</span>
+                      <span className="font-medium"><TranslatedText text="All categories" /></span>
 
                       {!initialCategory && (
                         <CheckCircle2 className="h-3.5 w-3.5" />
@@ -247,7 +248,7 @@ export function AppsDirectoryClient({
                         }`}
                       >
                         <span className="truncate font-medium">
-                          {category.name}
+                          <TranslatedText text={category.name} />
                         </span>
 
                         {initialCategory === category.slug && (
@@ -268,7 +269,7 @@ export function AppsDirectoryClient({
                         className="h-10 w-full gap-2 rounded-xl"
                       >
                         <X className="h-4 w-4" />
-                        Clear all filters
+                        <TranslatedText text="Clear all filters" />
                       </Button>
                     </>
                   )}
@@ -285,8 +286,8 @@ export function AppsDirectoryClient({
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-bold tracking-tight">
                         {activeCategory
-                          ? activeCategory.name
-                          : 'All Applications'}
+                          ? <TranslatedText text={activeCategory.name} />
+                          : <TranslatedText text="All Applications" />}
                       </h2>
 
                       <Badge
@@ -309,7 +310,7 @@ export function AppsDirectoryClient({
                         variant="outline"
                         className="rounded-full px-3 py-1"
                       >
-                        {activeCategory.name}
+                        <TranslatedText text={activeCategory.name} />
                       </Badge>
                     )}
 
@@ -318,7 +319,7 @@ export function AppsDirectoryClient({
                         variant="outline"
                         className="max-w-[220px] truncate rounded-full px-3 py-1"
                       >
-                        Search: “{query}”
+                        <TranslatedText text="Search" />: “{query}”
                       </Badge>
                     )}
                   </div>
@@ -339,7 +340,7 @@ export function AppsDirectoryClient({
                           className="gap-2 rounded-xl"
                         >
                           <X className="h-4 w-4" />
-                          Clear filters
+                          <TranslatedText text="Clear filters" />
                         </Button>
                       ) : undefined
                     }
@@ -380,7 +381,7 @@ export function AppsDirectoryClient({
                           }
                           className="rounded-xl"
                         >
-                          ← Previous
+                          ← <TranslatedText text="Previous" />
                         </Button>
 
                         {Array.from(
@@ -438,7 +439,7 @@ export function AppsDirectoryClient({
                           }
                           className="rounded-xl"
                         >
-                          Next →
+                          <TranslatedText text="Next" /> →
                         </Button>
                       </div>
                     </div>
@@ -452,6 +453,8 @@ export function AppsDirectoryClient({
     </main>
   );
 }
+
+
 
 
 

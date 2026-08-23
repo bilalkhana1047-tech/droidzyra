@@ -38,6 +38,8 @@ import { VersionHistoryList } from '@/components/apps/version-history-list';
 import { ScreenshotsGallery } from '@/components/apps/screenshots-gallery';
 import { DownloadSourceSection } from '@/components/apps/download-source-section';
 import { AppFAQ } from '@/components/apps/app-faq';
+import { AppTranslatedContent } from '@/components/i18n/app-translated-content';
+import { TranslatedText } from '@/components/i18n/translated-text';
 
 import {
   Card,
@@ -276,7 +278,7 @@ export default async function AppDetailPage({
                 </TabsTrigger>
 
                 <TabsTrigger value="compatibility" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
-                  Compatibility
+                  <TranslatedText text="Compatibility" />
                 </TabsTrigger>
 
                 <TabsTrigger value="faq" className="rounded-xl px-4 py-2.5 font-semibold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm">
@@ -295,29 +297,11 @@ export default async function AppDetailPage({
                 >
                   <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
                     <CardContent className="p-6 sm:p-7">
-                      {app.short_description && (
-                        <p className="text-base font-medium leading-7 text-foreground">
-                          {app.short_description}
-                        </p>
-                      )}
-
-                      {app.description && (
-                        <div
-                          className={
-                            app.short_description
-                              ? "mt-4 whitespace-pre-line text-muted-foreground leading-7"
-                              : "whitespace-pre-line text-muted-foreground leading-7"
-                          }
-                        >
-                          {app.description}
-                        </div>
-                      )}
-
-                      {!app.short_description && !app.description && (
-                        <p className="text-muted-foreground leading-7">
-                          No description available.
-                        </p>
-                      )}
+                      <AppTranslatedContent
+                        section="about"
+                        shortDescription={app.short_description}
+                        description={app.description}
+                      />
 
                       <p className="mt-4 text-xs leading-5 text-muted-foreground/80">
                         {app.name} and its logo are trademarks of their respective owner.
@@ -368,31 +352,15 @@ export default async function AppDetailPage({
                 {/* Key Features */}
                 {app.features?.trim() && (
                   <Section
-                    title="Key Features"
+                    title={<TranslatedText text="Key Features" />}
                     icon={<ListChecks className="h-5 w-5" />}
                   >
                     <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
                       <CardContent className="p-6 sm:p-7">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {app.features
-                            .split(/\r?\n/)
-                            .map((feature) => feature.trim())
-                            .filter(Boolean)
-                            .map((feature, index) => (
-                              <div
-                                key={`${feature}-${index}`}
-                                className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-4"
-                              >
-                                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                                  ✓
-                                </span>
-
-                                <p className="text-sm leading-6 text-muted-foreground">
-                                  {feature}
-                                </p>
-                              </div>
-                            ))}
-                        </div>
+                        <AppTranslatedContent
+                          section="features"
+                          features={app.features}
+                        />
                       </CardContent>
                     </Card>
                   </Section>
@@ -411,7 +379,7 @@ export default async function AppDetailPage({
 
                 {/* Latest Version */}
                 <Section
-                  title="Latest Version"
+                  title={<TranslatedText text="Latest Version" />}
                   icon={<History className="h-5 w-5" />}
                 >
                   {latest ? (
@@ -487,14 +455,15 @@ export default async function AppDetailPage({
                 {/* Editorial Notes */}
                 {app.editorial_notes?.trim() && (
                   <Section
-                    title="DroidZyra Notes"
+                    title={<TranslatedText text="DroidZyra Notes" />}
                     icon={<HelpCircle className="h-5 w-5" />}
                   >
                     <Card className="overflow-hidden rounded-[22px] border-border/60 bg-background/80 shadow-sm">
                       <CardContent className="p-6 sm:p-7">
-                        <div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
-                          {app.editorial_notes}
-                        </div>
+                        <AppTranslatedContent
+                          section="notes"
+                          editorialNotes={app.editorial_notes}
+                        />
                       </CardContent>
                     </Card>
                   </Section>
@@ -502,7 +471,7 @@ export default async function AppDetailPage({
 
                 {/* Version History */}
                 <Section
-                  title="Version History"
+                  title={<TranslatedText text="Version History" />}
                   icon={<History className="h-5 w-5" />}
                 >
                   {otherVersions.length > 0 ? (
@@ -616,7 +585,7 @@ export default async function AppDetailPage({
                 className="mt-6"
               >
                 <Section
-                  title="Compatibility"
+                  title={<TranslatedText text="Compatibility" />}
                   icon={
                     <Smartphone className="h-5 w-5" />
                   }
@@ -674,7 +643,7 @@ export default async function AppDetailPage({
                           <Link
                             href={`/compatibility?app=${app.slug}`}
                           >
-                            Open in Compatibility Finder
+                            <TranslatedText text="Open in Compatibility Finder" />
                           </Link>
                         </Button>
                       </div>
@@ -848,7 +817,7 @@ function AppHeader({
               <Button asChild className="h-11 rounded-xl px-5 shadow-md shadow-primary/15">
                 <Link href={`/apps/${app.slug}/versions/${latest.version_name}`}>
                   <History className="mr-2 h-4 w-4" />
-                  View Download Options
+                  <TranslatedText text="View Download Options" />
                 </Link>
               </Button>
             )}
@@ -871,7 +840,7 @@ function AppHeader({
             >
               <Link href="/compatibility">
                 <Smartphone className="mr-2 h-4 w-4" />
-                Check Compatibility
+                <TranslatedText text="Check Compatibility" />
               </Link>
             </Button>
 
@@ -1113,7 +1082,7 @@ function Section({
   icon,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -1131,6 +1100,11 @@ function Section({
     </section>
   );
 }
+
+
+
+
+
 
 
 

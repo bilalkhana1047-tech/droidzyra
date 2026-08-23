@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -11,8 +14,113 @@ import {
 import { siteConfig } from '@/lib/site';
 import { Logo } from '@/components/layout/logo';
 import { Container } from '@/components/layout/container';
+import { useLanguage } from '@/components/i18n/language-provider';
 
 export function Footer() {
+  const { languageCode, translateMany } = useLanguage();
+
+  const footerSourceTexts = useMemo(() => {
+    const texts = [
+      `${siteConfig.tagline} Discover Android apps, compare versions and understand compatibility before choosing the right version for your device.`,
+      "No piracy. No modded APKs. Focused on trusted and authorized sources.",
+      "Version history",
+      "Compatibility",
+      "Clear metadata",
+      "All rights reserved.",
+      "Built for Android users worldwide.",
+    ];
+
+    for (const group of siteConfig.footerLinks) {
+      texts.push(group.title);
+
+      for (const link of group.links) {
+        texts.push(link.label);
+      }
+    }
+
+    return texts;
+  }, []);
+
+  const [translatedFooter, setTranslatedFooter] =
+    useState<string[]>(footerSourceTexts);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function translateFooter() {
+      if (languageCode === "en") {
+        setTranslatedFooter(footerSourceTexts);
+        return;
+      }
+
+      const translated =
+        await translateMany(footerSourceTexts);
+
+      if (!cancelled) {
+        setTranslatedFooter(translated);
+      }
+    }
+
+    translateFooter();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    languageCode,
+    translateMany,
+    footerSourceTexts,
+  ]);
+
+  let translationIndex = 0;
+
+  const brandDescription =
+    translatedFooter[translationIndex++] ??
+    footerSourceTexts[0];
+
+  const trustText =
+    translatedFooter[translationIndex++] ??
+    footerSourceTexts[1];
+
+  const versionHistoryText =
+    translatedFooter[translationIndex++] ??
+    "Version history";
+
+  const compatibilityText =
+    translatedFooter[translationIndex++] ??
+    "Compatibility";
+
+  const metadataText =
+    translatedFooter[translationIndex++] ??
+    "Clear metadata";
+
+  const rightsReservedText =
+    translatedFooter[translationIndex++] ??
+    "All rights reserved.";
+
+  const worldwideText =
+    translatedFooter[translationIndex++] ??
+    "Built for Android users worldwide.";
+
+  const translatedGroups =
+    siteConfig.footerLinks.map((group) => {
+      const title =
+        translatedFooter[translationIndex++] ??
+        group.title;
+
+      const links = group.links.map((link) => ({
+        ...link,
+        label:
+          translatedFooter[translationIndex++] ??
+          link.label,
+      }));
+
+      return {
+        ...group,
+        title,
+        links,
+      };
+    });
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-border/60 bg-slate-950 text-white">
       <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-violet-600/10 blur-[120px]" />
@@ -28,9 +136,7 @@ export function Footer() {
             </div>
 
             <p className="mt-3 max-w-sm text-sm leading-6 text-slate-400">
-              {siteConfig.tagline} Discover Android apps,
-              compare versions and understand compatibility
-              before choosing the right version for your device.
+              {brandDescription}
             </p>
 
             <div className="mt-3 inline-flex items-start gap-2 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.06] px-3.5 py-3 text-xs leading-5 text-slate-300">
@@ -45,17 +151,17 @@ export function Footer() {
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-400">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-violet-400" />
-                Version history
+                {versionHistoryText}
               </span>
 
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-violet-400" />
-                Compatibility
+                {compatibilityText}
               </span>
 
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-violet-400" />
-                Clear metadata
+                {metadataText}
               </span>
             </div>
 
@@ -135,7 +241,7 @@ export function Footer() {
 
           </div>
           {/* Links */}
-          {siteConfig.footerLinks.map((group) => (
+          {translatedGroups.map((group) => (
             <div key={group.title}>
               <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
@@ -171,7 +277,7 @@ export function Footer() {
 
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-              Built for Android users worldwide.
+              {worldwideText}
             </div>
           </div>
         </div>
@@ -179,6 +285,11 @@ export function Footer() {
     </footer>
   );
 }
+
+
+
+
+
 
 
 
