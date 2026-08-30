@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/footer';
 import { siteConfig } from '@/lib/site';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { LanguageProvider } from '@/components/i18n/language-provider';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -49,23 +50,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-  <script
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3684215793807746"
-    crossOrigin="anonymous"
-  />
-</head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3684215793807746"
+          crossOrigin="anonymous"
+        />
+      </head>
+
       <body className="min-h-screen flex flex-col font-sans">
-        <LanguageProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <GoogleAnalytics />
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <GoogleAnalytics />
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

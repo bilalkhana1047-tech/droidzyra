@@ -19,6 +19,7 @@ import { Logo } from '@/components/layout/logo';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/layout/container';
 import { LanguageSelector } from '@/components/i18n/language-selector';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useLanguage } from '@/components/i18n/language-provider';
 
 export function Header() {
@@ -213,6 +214,11 @@ export function Header() {
             <LanguageSelector />
           </div>
 
+          {/* Theme toggle */}
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
+
           {/* Mobile button */}
           <Button
             variant="ghost"
@@ -304,5 +310,8 @@ export function Header() {
     </header>
   );
 }
+
+
+
 
 
