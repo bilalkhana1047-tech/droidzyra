@@ -301,6 +301,7 @@ export default async function AppDetailPage({
                         section="about"
                         shortDescription={app.short_description}
                         description={app.description}
+                        internalLinks={app.internal_links}
                       />
 
                       <p className="mt-4 text-xs leading-5 text-muted-foreground/80">
@@ -463,6 +464,7 @@ export default async function AppDetailPage({
                         <AppTranslatedContent
                           section="notes"
                           editorialNotes={app.editorial_notes}
+                          internalLinks={app.internal_links}
                         />
                       </CardContent>
                     </Card>
@@ -1100,6 +1102,8 @@ function Section({
     </section>
   );
 }
+
+
 
 
 

@@ -47,6 +47,19 @@ type AppItem = {
   updated_at: string;
 };
 
+type InternalLinkItem = {
+  id?: string;
+  source_app_id?: string;
+  target_app_id: string;
+  anchor_text: string;
+  placement: "description" | "editorial_notes";
+};
+
+type InternalLinkTarget = {
+  id: string;
+  name: string;
+  slug: string;
+};
 type AppForm = {
   name: string;
   slug: string;
@@ -166,7 +179,105 @@ const emptyApp: AppForm = {
 };
 
 export default function AdminPage() {
+
+  async function loadInternalLinkTargets() {
+    if (!supabase) {
+      console.error("Supabase client is not available.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("apps")
+      .select("id, name, slug")
+      .eq("status", "active")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Internal link target loading error:", error);
+      return;
+    }
+
+    setInternalLinkTargets((data ?? []) as InternalLinkTarget[]);
+  }
+  const [internalLinks, setInternalLinks] = useState<InternalLinkItem[]>([]);
+
+  const [newInternalLink, setNewInternalLink] = useState<InternalLinkItem>({
+    target_app_id: "",
+    anchor_text: "",
+    placement: "description",
+  });
+  const [internalLinkTargets, setInternalLinkTargets] = useState<InternalLinkTarget[]>([]);
+  function addInternalLink() {
+    const anchor = newInternalLink.anchor_text.trim();
+
+    if (!anchor || !newInternalLink.target_app_id) {
+      setErrorMessage("Enter anchor text and select a target app.");
+      return;
+    }
+
+    const sourceText =
+      newInternalLink.placement === "description"
+        ? newApp.description
+        : newApp.editorial_notes;
+
+    if (!sourceText.toLowerCase().includes(anchor.toLowerCase())) {
+      setErrorMessage(
+        newInternalLink.placement === "description"
+          ? "Anchor text must exist in Long Description."
+          : "Anchor text must exist in Editorial Notes."
+      );
+      return;
+    }
+
+    if (
+      editingAppId &&
+      newInternalLink.target_app_id === editingAppId
+    ) {
+      setErrorMessage("An app cannot link to itself.");
+      return;
+    }
+
+    const duplicate = internalLinks.some(
+      (link) =>
+        link.target_app_id === newInternalLink.target_app_id &&
+        link.anchor_text.toLowerCase() === anchor.toLowerCase() &&
+        link.placement === newInternalLink.placement
+    );
+
+    if (duplicate) {
+      setErrorMessage("This internal link has already been added.");
+      return;
+    }
+
+    setInternalLinks((current) => [
+      ...current,
+      {
+        target_app_id: newInternalLink.target_app_id,
+        anchor_text: anchor,
+        placement: newInternalLink.placement,
+      },
+    ]);
+
+    setNewInternalLink({
+      target_app_id: "",
+      anchor_text: "",
+      placement: "description",
+    });
+
+    setErrorMessage("");
+  }
+
+  function removeInternalLink(index: number) {
+    setInternalLinks((current) =>
+      current.filter((_, currentIndex) => currentIndex !== index)
+    );
+  }
+
   const [activeMenu, setActiveMenu] = useState("Dashboard");
+
+  useEffect(() => {
+    loadInternalLinkTargets();
+  }, []);
 
   useEffect(() => {
     const section = new URLSearchParams(window.location.search)
@@ -811,6 +922,12 @@ const [versionLoading, setVersionLoading] = useState(false);
   function resetAppForm() {
     setNewApp({ ...emptyApp });
     setEditingAppId(null);
+    setInternalLinks([]);
+    setNewInternalLink({
+      target_app_id: "",
+      anchor_text: "",
+      placement: "description",
+    });
   }
 
   function startAddApp() {
@@ -819,7 +936,30 @@ const [versionLoading, setVersionLoading] = useState(false);
     setShowAddApp(true);
   }
 
+  async function loadInternalLinksForApp(appId: string) {
+    if (!supabase) {
+      console.error("Supabase client is not available.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("app_internal_links")
+      .select("id, source_app_id, target_app_id, anchor_text, placement")
+      .eq("source_app_id", appId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Internal links loading error:", error);
+      setErrorMessage("Could not load internal links.");
+      return;
+    }
+
+    setInternalLinks((data ?? []) as InternalLinkItem[]);
+  }
+
   function startEditApp(app: AppItem) {
+    setInternalLinks([]);
+    loadInternalLinksForApp(app.id);
     setEditingAppId(app.id);
     setErrorMessage("");
 
@@ -969,7 +1109,7 @@ const [versionLoading, setVersionLoading] = useState(false);
     setErrorMessage("");
 
     try {
-      const { error } = await supabase.from("apps").insert({
+      const { data: createdApp, error } = await supabase.from("apps").insert({
         name: newApp.name.trim(),
         slug: newApp.slug.trim(),
         developer: newApp.developer.trim(),
@@ -986,7 +1126,7 @@ const [versionLoading, setVersionLoading] = useState(false);
           focus_keyword: newApp.focus_keyword.trim() || null,
         status: newApp.status,
           is_trending: newApp.is_trending,
-      });
+      }).select("id").single();
 
       if (error) {
         console.error("Create app error:", error);
@@ -994,7 +1134,30 @@ const [versionLoading, setVersionLoading] = useState(false);
         return;
       }
 
+      if (internalLinks.length > 0) {
+        const linksToInsert = internalLinks.map((link) => ({
+          source_app_id: createdApp.id,
+          target_app_id: link.target_app_id,
+          anchor_text: link.anchor_text.trim(),
+          placement: link.placement,
+        }));
+
+        const { error: internalLinksError } = await supabase
+          .from("app_internal_links")
+          .insert(linksToInsert);
+
+        if (internalLinksError) {
+          console.error("Create internal links error:", internalLinksError);
+          setErrorMessage(
+            "App was created, but internal links could not be saved: " +
+              internalLinksError.message
+          );
+          return;
+        }
+      }
+
       cancelAppForm();
+      await loadInternalLinkTargets();
 
       await loadDashboard();
     } catch (error) {
@@ -1054,6 +1217,48 @@ const [versionLoading, setVersionLoading] = useState(false);
         console.error("Update app error:", error);
         setErrorMessage(error.message);
         return;
+      }
+
+      const { error: deleteInternalLinksError } = await supabase
+        .from("app_internal_links")
+        .delete()
+        .eq("source_app_id", editingAppId);
+
+      if (deleteInternalLinksError) {
+        console.error(
+          "Delete internal links error:",
+          deleteInternalLinksError
+        );
+        setErrorMessage(
+          "App was updated, but internal links could not be synchronized: " +
+            deleteInternalLinksError.message
+        );
+        return;
+      }
+
+      if (internalLinks.length > 0) {
+        const linksToInsert = internalLinks.map((link) => ({
+          source_app_id: editingAppId,
+          target_app_id: link.target_app_id,
+          anchor_text: link.anchor_text.trim(),
+          placement: link.placement,
+        }));
+
+        const { error: insertInternalLinksError } = await supabase
+          .from("app_internal_links")
+          .insert(linksToInsert);
+
+        if (insertInternalLinksError) {
+          console.error(
+            "Insert internal links error:",
+            insertInternalLinksError
+          );
+          setErrorMessage(
+            "App was updated, but internal links could not be saved: " +
+              insertInternalLinksError.message
+          );
+          return;
+        }
       }
 
       cancelAppForm();
@@ -1886,6 +2091,134 @@ const [versionLoading, setVersionLoading] = useState(false);
                   placeholder="Detailed original app description..."
                   rows={8}
                 />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Internal Links</label>
+
+                <div
+                  style={{
+                    border: "1px solid #eaecf0",
+                    borderRadius: "14px",
+                    padding: "16px",
+                    display: "grid",
+                    gap: "12px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={newInternalLink.anchor_text}
+                    onChange={(e) =>
+                      setNewInternalLink({
+                        ...newInternalLink,
+                        anchor_text: e.target.value,
+                      })
+                    }
+                    placeholder="Anchor text, e.g. BeFunky Photo Editor APK"
+                  />
+
+                  <select
+                    value={newInternalLink.target_app_id}
+                    onChange={(e) =>
+                      setNewInternalLink({
+                        ...newInternalLink,
+                        target_app_id: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select target app</option>
+
+                    {internalLinkTargets
+                      .filter((target) => target.id !== editingAppId)
+                      .map((target) => (
+                        <option key={target.id} value={target.id}>
+                          {target.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  <select
+                    value={newInternalLink.placement}
+                    onChange={(e) =>
+                      setNewInternalLink({
+                        ...newInternalLink,
+                        placement: e.target.value as
+                          | "description"
+                          | "editorial_notes",
+                      })
+                    }
+                  >
+                    <option value="description">
+                      Long Description
+                    </option>
+                    <option value="editorial_notes">
+                      Editorial Notes
+                    </option>
+                  </select>
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={addInternalLink}
+                  >
+                    + Add Internal Link
+                  </button>
+
+                  {internalLinks.length > 0 && (
+                    <div style={{ display: "grid", gap: "8px" }}>
+                      {internalLinks.map((link, index) => {
+                        const target = internalLinkTargets.find(
+                          (app) => app.id === link.target_app_id
+                        );
+
+                        return (
+                          <div
+                            key={`${link.target_app_id}-${index}`}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "12px",
+                              padding: "10px 12px",
+                              border: "1px solid #eaecf0",
+                              borderRadius: "10px",
+                            }}
+                          >
+                            <div>
+                              <strong>{link.anchor_text}</strong>
+
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  opacity: 0.7,
+                                  marginTop: "3px",
+                                }}
+                              >
+                                {"->"} {target?.name ?? "Unknown app"}{" "}
+                                ({link.placement === "description"
+                                  ? "Long Description"
+                                  : "Editorial Notes"})
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeInternalLink(index)}
+                              style={{
+                                border: "1px solid #eaecf0",
+                                borderRadius: "8px",
+                                padding: "6px 10px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="form-field full-width">
@@ -4884,6 +5217,12 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

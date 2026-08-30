@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type {
   App,
   AppDetail,
+  AppInternalLink,
   Category,
   CompatibilityRecord,
   Screenshot,
@@ -198,35 +199,67 @@ export async function getAppBySlug(
 
   if (error || !app) return null;
 
-  const [versionsRes, screenshotsRes, compatRes] = await Promise.all([
-    supabase
-      .from('versions')
-      .select('*, changelog:changelogs(*)')
-      .eq('app_id', app.id)
-      .order('release_date', { ascending: false }),
+  const [versionsRes, screenshotsRes, compatRes, internalLinksRes] =
+    await Promise.all([
+      supabase
+        .from('versions')
+        .select('*, changelog:changelogs(*)')
+        .eq('app_id', app.id)
+        .order('release_date', { ascending: false }),
 
-    supabase
-      .from('screenshots')
-      .select('*')
-      .eq('app_id', app.id)
-      .order('sort_order', { ascending: true }),
+      supabase
+        .from('screenshots')
+        .select('*')
+        .eq('app_id', app.id)
+        .order('sort_order', { ascending: true }),
 
-    supabase
-      .from('compatibility')
-      .select('*, version:versions(id, version_name, version_code)')
-      .eq('app_id', app.id),
-  ]);
+      supabase
+        .from('compatibility')
+        .select('*, version:versions(id, version_name, version_code)')
+        .eq('app_id', app.id),
+
+      supabase
+        .from('app_internal_links')
+        .select(`
+          id,
+          source_app_id,
+          target_app_id,
+          anchor_text,
+          placement,
+          target:apps!app_internal_links_target_app_id_fkey(
+            id,
+            name,
+            slug
+          )
+        `)
+        .eq('source_app_id', app.id)
+        .order('created_at', { ascending: true }),
+    ]);
 
   const versions = (versionsRes.data as Version[]) ?? [];
   const screenshots = (screenshotsRes.data as Screenshot[]) ?? [];
   const compatibility =
     (compatRes.data as CompatibilityRecord[]) ?? [];
 
+
+  const internal_links: AppInternalLink[] =
+    (internalLinksRes.data ?? []).map((link: any) => ({
+      id: link.id,
+      source_app_id: link.source_app_id,
+      target_app_id: link.target_app_id,
+      anchor_text: link.anchor_text,
+      placement: link.placement,
+      target: Array.isArray(link.target)
+        ? link.target[0] ?? null
+        : link.target ?? null,
+    }));
+
   return {
     ...(app as App),
     versions,
     screenshots,
     compatibility,
+    internal_links,
   };
 }
 
@@ -689,6 +722,13 @@ export async function getTrendingApps(
 ): Promise<App[]> {
   return getTrendingAppsCached(limit);
 }
+
+
+
+
+
+
+
 
 
 

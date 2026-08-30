@@ -85,10 +85,24 @@ export interface Screenshot {
   image_height: number | null;
 }
 
+export interface AppInternalLink {
+  id: string;
+  source_app_id: string;
+  target_app_id: string;
+  anchor_text: string;
+  placement: "description" | "editorial_notes";
+  target: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+}
+
 export interface AppDetail extends App {
   versions: Version[];
   screenshots: Screenshot[];
   compatibility: CompatibilityRecord[];
+  internal_links: AppInternalLink[];
 }
 
 

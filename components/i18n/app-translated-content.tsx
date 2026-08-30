@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/components/i18n/language-provider";
+import type { AppInternalLink } from "@/lib/types";
 
 type AppTranslatedContentProps = {
   shortDescription?: string | null;
   description?: string | null;
   features?: string | null;
   editorialNotes?: string | null;
+  internalLinks?: AppInternalLink[];
   section: "about" | "features" | "notes";
 };
 
@@ -23,9 +27,83 @@ export function AppTranslatedContent({
   description,
   features,
   editorialNotes,
+  internalLinks = [],
   section,
 }: AppTranslatedContentProps) {
   const { languageCode, translateMany } = useLanguage();
+  function renderLinkedText(
+    text: string,
+    placement: "description" | "editorial_notes"
+  ) {
+    if (!text || internalLinks.length === 0) {
+      return text;
+    }
+
+    const lowerText = text.toLowerCase();
+
+    const matches = internalLinks
+      .filter(
+        (link) =>
+          link.placement === placement &&
+          link.target?.slug &&
+          link.anchor_text.trim()
+      )
+      .map((link) => {
+        const anchor = link.anchor_text.trim();
+        const index = lowerText.indexOf(anchor.toLowerCase());
+
+        return {
+          link,
+          anchor,
+          index,
+        };
+      })
+      .filter((match) => match.index >= 0)
+      .sort((a, b) => {
+        if (a.index !== b.index) {
+          return a.index - b.index;
+        }
+
+        return b.anchor.length - a.anchor.length;
+      });
+
+    if (matches.length === 0) {
+      return text;
+    }
+
+    const parts: ReactNode[] = [];
+    let cursor = 0;
+
+    for (const match of matches) {
+      if (match.index < cursor) {
+        continue;
+      }
+
+      if (match.index > cursor) {
+        parts.push(text.slice(cursor, match.index));
+      }
+
+      const end = match.index + match.anchor.length;
+
+      parts.push(
+        <Link
+          key={`${placement}-${match.link.id}-${match.index}`}
+          href={`/apps/${match.link.target!.slug}`}
+          className="font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary"
+        >
+          {text.slice(match.index, end)}
+        </Link>
+      );
+
+      cursor = end;
+    }
+
+    if (cursor < text.length) {
+      parts.push(text.slice(cursor));
+    }
+
+    return parts;
+  }
 
   const featureList = useMemo(
     () =>
@@ -133,7 +211,7 @@ export function AppTranslatedContent({
                   : "whitespace-pre-line text-muted-foreground leading-7"
               }
             >
-              {content.description}
+              {renderLinkedText(content.description, "description")}
             </div>
           )}
         </div>
@@ -173,11 +251,20 @@ export function AppTranslatedContent({
   if (section === "notes") {
     return editorialNotes?.trim() ? (
       <div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
-        {content.editorialNotes}
+        {renderLinkedText(content.editorialNotes, "editorial_notes")}
       </div>
     ) : null;
   }
 
   return null;
 }
+
+
+
+
+
+
+
+
+
 
