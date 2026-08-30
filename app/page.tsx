@@ -17,6 +17,7 @@ import {
 
 import { Container } from '@/components/layout/container';
 import { HeroSearch } from '@/components/shared/hero-search';
+import { HeroAnimatedBackground } from '@/components/shared/hero-animated-background';
 import { AppCard } from '@/components/shared/app-card';
 import { CategoryCard } from '@/components/shared/category-card';
 import { CompatibilityFinderWidget } from '@/components/shared/compatibility-finder-widget';
@@ -77,39 +78,9 @@ export default async function HomePage() {
 function Hero() {
   return (
     <section className="relative isolate overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 -z-20"
-        style={{
-          background:
-            'linear-gradient(180deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--background)) 72%)',
-        }}
-      />
+      {/* Premium animated background */}
+      <HeroAnimatedBackground />
 
-      <div
-        className="absolute left-1/2 top-[-220px] -z-10 h-[520px] w-[900px] -translate-x-1/2 rounded-full blur-3xl"
-        style={{
-          background:
-            'radial-gradient(circle, hsl(var(--primary) / 0.20), transparent 68%)',
-        }}
-      />
-
-      <div
-        className="absolute right-[-180px] top-[180px] -z-10 h-[380px] w-[380px] rounded-full blur-3xl"
-        style={{
-          background:
-            'radial-gradient(circle, hsl(250 90% 65% / 0.12), transparent 70%)',
-        }}
-      />
-
-      <div
-        className="absolute inset-0 -z-10 opacity-[0.035]"
-        style={{
-          backgroundImage:
-            'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
-          backgroundSize: '44px 44px',
-        }}
-      />
 
       <Container>
         <div className="mx-auto flex max-w-5xl flex-col items-center px-4 pb-16 pt-16 text-center sm:pb-20 sm:pt-24 lg:pt-28">
@@ -939,6 +910,8 @@ function SectionHeader({
     </div>
   );
 }
+
+
 
 
 
