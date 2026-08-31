@@ -183,7 +183,7 @@ export default function AdminVersionsPage() {
       architecture: version.architecture || "",
       file_size:
         version.file_size !== null && version.file_size !== undefined
-          ? String(version.file_size)
+          ? String(Number((version.file_size / (1024 * 1024)).toFixed(2)))
           : "",
       sha256: version.sha256 || "",
       source_url: version.source_url || "",
@@ -228,7 +228,7 @@ export default function AdminVersionsPage() {
     const fileSize = Number(form.file_size);
 
     if (!Number.isFinite(fileSize) || fileSize < 0) {
-      setErrorMessage("File size must be a valid number in bytes.");
+      setErrorMessage("File size must be a valid number in MB.");
       return;
     }
 
@@ -245,7 +245,7 @@ export default function AdminVersionsPage() {
         min_android: form.min_android.trim(),
         target_android: form.target_android.trim(),
         architecture: form.architecture.trim(),
-        file_size: Math.round(fileSize),
+        file_size: Math.round(fileSize * 1024 * 1024),
         sha256: form.sha256.trim() || null,
         source_url: form.source_url.trim() || null,
         verified: form.verified,
@@ -512,12 +512,13 @@ export default function AdminVersionsPage() {
 
               <div className="form-field">
                 <label>
-                  File Size (bytes) <span>*</span>
+                  File Size (MB) <span>*</span>
                 </label>
 
                 <input
                   type="number"
                   min="0"
+                  step="0.01"
                   value={form.file_size}
                   onChange={(e) =>
                     setForm({
@@ -525,11 +526,11 @@ export default function AdminVersionsPage() {
                       file_size: e.target.value,
                     })
                   }
-                  placeholder="85000000"
+                  placeholder="34.5"
                 />
 
                 <small>
-                  Enter the APK size in bytes.
+                  Enter the APK size in MB, for example 34.5.
                 </small>
               </div>
 
@@ -1125,5 +1126,6 @@ export default function AdminVersionsPage() {
     </div>
   );
 }
+
 
 

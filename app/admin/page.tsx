@@ -601,7 +601,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         min_android: version.min_android,
         target_android: version.target_android,
         architecture: version.architecture,
-        file_size: String(version.file_size ?? ""),
+        file_size: version.file_size ? String(Number((version.file_size / (1024 * 1024)).toFixed(2))) : "",
         sha256: version.sha256 ?? "",
         source_url: version.source_url ?? "",
         custom_download_url: version.custom_download_url ?? "",
@@ -642,7 +642,7 @@ const [versionLoading, setVersionLoading] = useState(false);
       const fileSize = Number(newVersion.file_size);
     
       if (!Number.isFinite(fileSize) || fileSize < 0) {
-        setErrorMessage("File size must be a valid positive number.");
+        setErrorMessage("File size must be a valid positive number in MB.");
         return;
       }
     
@@ -668,7 +668,7 @@ const [versionLoading, setVersionLoading] = useState(false);
           min_android: newVersion.min_android.trim(),
           target_android: newVersion.target_android.trim(),
           architecture: newVersion.architecture.trim(),
-          file_size: Math.floor(fileSize),
+          file_size: Math.round(fileSize * 1024 * 1024),
           sha256: newVersion.sha256.trim() || null,
           source_url: newVersion.source_url.trim() || null,
             custom_download_url: newVersion.custom_download_url.trim() || null,
@@ -716,7 +716,7 @@ const [versionLoading, setVersionLoading] = useState(false);
       const fileSize = Number(newVersion.file_size);
     
       if (!Number.isFinite(fileSize) || fileSize < 0) {
-        setErrorMessage("File size must be a valid positive number.");
+        setErrorMessage("File size must be a valid positive number in MB.");
         return;
       }
     
@@ -743,7 +743,7 @@ const [versionLoading, setVersionLoading] = useState(false);
             min_android: newVersion.min_android.trim(),
             target_android: newVersion.target_android.trim(),
             architecture: newVersion.architecture.trim(),
-            file_size: Math.floor(fileSize),
+            file_size: Math.round(fileSize * 1024 * 1024),
             sha256: newVersion.sha256.trim() || null,
             source_url: newVersion.source_url.trim() || null,
             custom_download_url: newVersion.custom_download_url.trim() || null,
@@ -2841,10 +2841,11 @@ const [versionLoading, setVersionLoading] = useState(false);
                 </div>
 
                 <div className="form-field">
-                  <label>File Size (bytes)</label>
+                  <label>File Size (MB)</label>
                   <input
                     type="number"
                     min="0"
+                    step="0.01"
                     value={newVersion.file_size}
                     onChange={(e) =>
                       setNewVersion({
@@ -2852,7 +2853,7 @@ const [versionLoading, setVersionLoading] = useState(false);
                         file_size: e.target.value,
                       })
                     }
-                    placeholder="e.g. 125000000"
+                    placeholder="e.g. 34.5"
                   />
                 </div>
 
@@ -5217,6 +5218,8 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
 
 
 
