@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
@@ -52,18 +51,14 @@ function extractRam(text: string): number | null {
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         {
-          error: "OpenAI API key is not configured.",
+          error: "Gemini API key is not configured.",
         },
         { status: 500 }
       );
     }
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
     if (!supabase) {
       return NextResponse.json(
@@ -331,100 +326,82 @@ const openai = new OpenAI({
 
     /*
      * STEP 7
-     * Ask OpenAI to reason ONLY over DroidZyra data.
+     * Gemini integration.
      */
 
-    const response =
-      await openai.responses.create({
-        model: "gpt-5-mini",
+    /*
+     * STEP 7
+     * Ask Gemini to reason ONLY over DroidZyra data.
+     */
 
-        instructions: `
+    const systemInstructions = `
 You are DroidZyra AI.
 
-You are an Android app compatibility and version
-assistant.
+You are an Android app compatibility and version assistant.
 
-Your job is to answer the user's question using
-ONLY the DroidZyra database context provided below.
+Your job is to answer the user's question using ONLY the DroidZyra database context provided below.
 
 STRICT FACTUAL RULES:
 
-1. Never invent apps, versions, compatibility,
-   Android requirements, release dates, architecture,
-   file sizes, source links or technical specifications.
+1. Never invent apps, versions, compatibility, Android requirements, release dates, architecture, file sizes, source links or technical specifications.
 
 2. The DroidZyra database is the source of truth.
 
-3. Compatibility records are the primary source for
-   compatibility claims.
+3. Compatibility records are the primary source for compatibility claims.
 
-4. Version records are the primary source for
-   version information.
+4. Version records are the primary source for version information.
 
-5. If the user provides an Android version, use the
-   compatibility records for that Android version.
+5. If the user provides an Android version, use the compatibility records for that Android version.
 
-6. If there is no compatibility record for the
-   requested Android version, clearly say that
-   DroidZyra currently has no compatibility data
-   for that Android version.
+6. If there is no compatibility record for the requested Android version, clearly say that DroidZyra currently has no compatibility data for that Android version.
 
-7. If multiple compatible versions exist, prefer
-   the newest available release date.
+7. If multiple compatible versions exist, prefer the newest available release date.
 
-8. The user's RAM can be considered as contextual
-   information, but NEVER claim that a specific
-   RAM amount is required unless the database
-   explicitly contains such information.
+8. The user's RAM can be considered as contextual information, but NEVER claim that a specific RAM amount is required unless the database explicitly contains such information.
 
-9. Do not say an app will definitely run smoothly.
-   Android compatibility alone does not guarantee
-   performance.
+9. Do not say an app will definitely run smoothly. Android compatibility alone does not guarantee performance.
 
 10. Do not invent download links.
 
-11. If a source URL exists in the database, you may
-    tell the user that a source is available.
-    Do not create or modify URLs.
+11. If a source URL exists in the database, you may tell the user that a source is available. Do not create or modify URLs.
 
 12. Do not expose internal database IDs.
 
 13. Keep the answer concise and useful.
 
-14. When recommending a version, explain the reason
-    using actual database information.
+14. When recommending a version, explain the reason using actual database information.
 
-15. If the available data is insufficient, honestly
-    say that more DroidZyra data is needed.
+15. If the available data is insufficient, honestly say that more DroidZyra data is needed.
 
-16. Never use outside knowledge to fill missing
-    DroidZyra database information.
+16. Never use outside knowledge to fill missing DroidZyra database information.
 
-17. If the user asks something unrelated to the
-    database, politely explain that DroidZyra AI
-    focuses on Android app discovery, versions and
-    compatibility.
-
-EXAMPLE:
-
-User:
-"My phone has Android 10 and 3GB RAM. Which
-WhatsApp version should I use?"
-
-You should:
-
-- Find WhatsApp in the database.
-- Find compatibility records for Android 10.
-- Find the connected version.
-- Prefer the newest compatible version.
-- Mention that 3GB RAM is contextual only.
-- Do not invent RAM requirements.
-- Explain the recommendation using database facts.
+17. If the user asks something unrelated to the database, politely explain that DroidZyra AI focuses on Android app discovery, versions and compatibility.
 
 Return a natural, user-friendly answer.
-        `.trim(),
+    `.trim();
 
-        input: `
+    const geminiResponse = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY!,
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [
+              {
+                text: systemInstructions,
+              },
+            ],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `
 User question:
 
 ${message}
@@ -432,13 +409,44 @@ ${message}
 DroidZyra database context:
 
 ${JSON.stringify(databaseContext)}
-        `.trim(),
-      });
+                  `.trim(),
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 700,
+          },
+        }),
+      }
+    );
+
+    if (!geminiResponse.ok) {
+      const geminiError = await geminiResponse.text();
+
+      console.error(
+        "DroidZyra Gemini API error:",
+        geminiResponse.status,
+        geminiError
+      );
+
+      return NextResponse.json(
+        {
+          error: "DroidZyra AI is temporarily unavailable.",
+        },
+        { status: 502 }
+      );
+    }
+
+    const geminiData = await geminiResponse.json();
 
     const answer =
-      response.output_text?.trim() ||
+      geminiData?.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text ?? "")
+        .join("")
+        .trim() ||
       "I could not generate an answer from the available DroidZyra data.";
-
     return NextResponse.json({
       answer,
 
@@ -469,3 +477,7 @@ ${JSON.stringify(databaseContext)}
     );
   }
 }
+
+
+
+
