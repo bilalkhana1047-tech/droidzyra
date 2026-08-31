@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 
 type AppRow = {
@@ -94,6 +95,92 @@ export async function POST(request: Request) {
       );
     }
 
+    /*
+     * RATE LIMIT
+     * Maximum 10 AI requests per IP every 10 minutes.
+     */
+
+    if (!supabaseAdmin) {
+      console.error("DroidZyra AI rate limiter is not configured.");
+
+      return NextResponse.json(
+        {
+          error: "DroidZyra AI is temporarily unavailable.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const forwardedFor = request.headers.get("x-forwarded-for");
+
+    const clientIp =
+      request.headers.get("x-nf-client-connection-ip")?.trim() ||
+      forwardedFor?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip")?.trim() ||
+      "unknown";
+
+    const windowStart = new Date(
+      Date.now() - 10 * 60 * 1000
+    ).toISOString();
+
+    const { count: recentRequestCount, error: rateCountError } =
+      await supabaseAdmin
+        .from("ai_rate_limits")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("ip_address", clientIp)
+        .gte("created_at", windowStart);
+
+    if (rateCountError) {
+      console.error(
+        "DroidZyra AI rate limit count error:",
+        rateCountError
+      );
+
+      return NextResponse.json(
+        {
+          error: "DroidZyra AI is temporarily unavailable.",
+        },
+        { status: 500 }
+      );
+    }
+
+    if ((recentRequestCount ?? 0) >= 10) {
+      return NextResponse.json(
+        {
+          error:
+            "You have reached the DroidZyra AI request limit. Please try again in a few minutes.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "600",
+          },
+        }
+      );
+    }
+
+    const { error: rateInsertError } = await supabaseAdmin
+      .from("ai_rate_limits")
+      .insert({
+        ip_address: clientIp,
+      });
+
+    if (rateInsertError) {
+      console.error(
+        "DroidZyra AI rate limit insert error:",
+        rateInsertError
+      );
+
+      return NextResponse.json(
+        {
+          error: "DroidZyra AI is temporarily unavailable.",
+        },
+        { status: 500 }
+      );
+    }
     const androidVersion = extractAndroidVersion(message);
     const ramGb = extractRam(message);
 
@@ -477,6 +564,11 @@ ${JSON.stringify(databaseContext)}
     );
   }
 }
+
+
+
+
+
 
 
 
