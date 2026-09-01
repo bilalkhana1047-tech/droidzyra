@@ -17,6 +17,11 @@ type VersionItem = {
   sha256: string | null;
   source_url: string | null;
   verified: boolean;
+  changelog: {
+    id: string;
+    content: string;
+    source_url: string | null;
+  }[];
 };
 
 type AppInfo = {
@@ -36,6 +41,8 @@ type VersionForm = {
   file_size: string;
   sha256: string;
   source_url: string;
+  changelog: string;
+  changelog_source_url: string;
   verified: boolean;
 };
 
@@ -49,6 +56,8 @@ const emptyForm: VersionForm = {
   file_size: "",
   sha256: "",
   source_url: "",
+  changelog: "",
+  changelog_source_url: "",
   verified: false,
 };
 
@@ -120,7 +129,7 @@ export default function AdminVersionsPage() {
         supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, verified"
+            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, verified, changelog:changelogs(id, content, source_url)"
           )
           .eq("app_id", appId)
           .order("release_date", { ascending: false }),
@@ -187,6 +196,8 @@ export default function AdminVersionsPage() {
           : "",
       sha256: version.sha256 || "",
       source_url: version.source_url || "",
+      changelog: version.changelog?.[0]?.content || "",
+      changelog_source_url: version.changelog?.[0]?.source_url || "",
       verified: Boolean(version.verified),
     });
 
@@ -251,33 +262,119 @@ export default function AdminVersionsPage() {
         verified: form.verified,
       };
 
+      let versionId = editingVersionId;
+
       if (editingVersionId) {
-        const { error } = await supabase
+        const { error: versionError } = await supabase
           .from("versions")
           .update(versionData)
           .eq("id", editingVersionId)
           .eq("app_id", appId);
 
-        if (error) {
-          console.error("Update version error:", error);
-          setErrorMessage(error.message);
+        if (versionError) {
+          console.error("Update version error:", versionError);
+          setErrorMessage(versionError.message);
           return;
         }
-
-        setSuccessMessage("Version updated successfully.");
       } else {
-        const { error } = await supabase
+        const { data: createdVersion, error: versionError } = await supabase
           .from("versions")
-          .insert(versionData);
+          .insert(versionData)
+          .select("id")
+          .single();
 
-        if (error) {
-          console.error("Create version error:", error);
-          setErrorMessage(error.message);
+        if (versionError || !createdVersion) {
+          console.error("Create version error:", versionError);
+          setErrorMessage(
+            versionError?.message || "Unable to create the version."
+          );
           return;
         }
 
-        setSuccessMessage("Version added successfully.");
+        versionId = createdVersion.id;
       }
+
+      if (!versionId) {
+        setErrorMessage("Unable to determine the saved version ID.");
+        return;
+      }
+
+      const changelogContent = form.changelog.trim();
+      const changelogSourceUrl =
+        form.changelog_source_url.trim() || null;
+
+      const { data: existingChangelog, error: changelogLookupError } =
+        await supabase
+          .from("changelogs")
+          .select("id")
+          .eq("version_id", versionId)
+          .maybeSingle();
+
+      if (changelogLookupError) {
+        console.error(
+          "Changelog lookup error:",
+          changelogLookupError
+        );
+        setErrorMessage(
+          `Version saved, but changelog could not be checked: ${changelogLookupError.message}`
+        );
+        return;
+      }
+
+      if (changelogContent) {
+        if (existingChangelog) {
+          const { error: changelogError } = await supabase
+            .from("changelogs")
+            .update({
+              content: changelogContent,
+              source_url: changelogSourceUrl,
+            })
+            .eq("id", existingChangelog.id);
+
+          if (changelogError) {
+            console.error("Update changelog error:", changelogError);
+            setErrorMessage(
+              `Version saved, but changelog could not be updated: ${changelogError.message}`
+            );
+            return;
+          }
+        } else {
+          const { error: changelogError } = await supabase
+            .from("changelogs")
+            .insert({
+              version_id: versionId,
+              content: changelogContent,
+              source_url: changelogSourceUrl,
+            });
+
+          if (changelogError) {
+            console.error("Create changelog error:", changelogError);
+            setErrorMessage(
+              `Version saved, but changelog could not be added: ${changelogError.message}`
+            );
+            return;
+          }
+        }
+      } else if (existingChangelog) {
+        const { error: changelogError } = await supabase
+          .from("changelogs")
+          .delete()
+          .eq("id", existingChangelog.id);
+
+        if (changelogError) {
+          console.error("Delete changelog error:", changelogError);
+          setErrorMessage(
+            `Version saved, but changelog could not be removed: ${changelogError.message}`
+          );
+          return;
+        }
+      }
+
+      setSuccessMessage(
+        editingVersionId
+          ? "Version and changelog updated successfully."
+          : "Version and changelog added successfully."
+      );
 
       setShowForm(false);
       resetForm();
@@ -290,7 +387,6 @@ export default function AdminVersionsPage() {
       setSaving(false);
     }
   }
-
   async function deleteVersion(version: VersionItem) {
     if (!supabase) {
       setErrorMessage("Supabase is not configured.");
@@ -566,23 +662,58 @@ export default function AdminVersionsPage() {
               </div>
 
               <div className="form-field full-width">
-              <label>Verification Status</label>
+                <label>Changelog / What's New</label>
 
-              <select
-                value={form.verified ? "verified" : "unverified"}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    verified: e.target.value === "verified",
-                  })
-                }
-              >
-                <option value="unverified">Unverified</option>
-                <option value="verified">Verified</option>
-              </select>
-            </div>
-            </div>
+                <textarea
+                  value={form.changelog}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      changelog: e.target.value,
+                    })
+                  }
+                  rows={6}
+                  placeholder="Describe what changed in this version..."
+                />
 
+                <small>
+                  Add release notes, fixes, improvements or other changes for this version.
+                </small>
+              </div>
+
+              <div className="form-field full-width">
+                <label>Changelog Source URL</label>
+
+                <input
+                  type="url"
+                  value={form.changelog_source_url}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      changelog_source_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://example.com/release-notes"
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Verification Status</label>
+
+                <select
+                  value={form.verified ? "verified" : "unverified"}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      verified: e.target.value === "verified",
+                    })
+                  }
+                >
+                  <option value="unverified">Unverified</option>
+                  <option value="verified">Verified</option>
+                </select>
+              </div>
+            </div>
 
             <div className="form-actions">
               <button
@@ -1126,6 +1257,16 @@ export default function AdminVersionsPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

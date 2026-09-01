@@ -92,6 +92,11 @@ type VersionItem = {
   source_url: string | null;
   custom_download_url: string | null;
   verified: boolean;
+  changelog: {
+    id: string;
+    content: string;
+    source_url: string | null;
+  }[];
 };
 
 type VersionForm = {
@@ -105,6 +110,8 @@ type VersionForm = {
   sha256: string;
   source_url: string;
   custom_download_url: string;
+  changelog: string;
+  changelog_source_url: string;
   verified: boolean;
 };
 
@@ -119,6 +126,8 @@ const emptyVersion: VersionForm = {
   sha256: "",
   source_url: "",
   custom_download_url: "",
+  changelog: "",
+  changelog_source_url: "",
   verified: false,
 };
 
@@ -556,7 +565,7 @@ const [versionLoading, setVersionLoading] = useState(false);
         const { data, error } = await supabase
           .from("versions")
           .select(
-            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url, verified"
+            "id, app_id, version_name, version_code, release_date, min_android, target_android, architecture, file_size, sha256, source_url, custom_download_url, verified, changelog:changelogs(id, content, source_url)"
           )
           .eq("app_id", app.id)
           .order("release_date", { ascending: false });
@@ -605,6 +614,8 @@ const [versionLoading, setVersionLoading] = useState(false);
         sha256: version.sha256 ?? "",
         source_url: version.source_url ?? "",
         custom_download_url: version.custom_download_url ?? "",
+        changelog: version.changelog?.[0]?.content || "",
+        changelog_source_url: version.changelog?.[0]?.source_url || "",
         verified: Boolean(version.verified),
       });
     
@@ -618,12 +629,75 @@ const [versionLoading, setVersionLoading] = useState(false);
       setNewVersion(emptyVersion);
     }
     
+    async function saveVersionChangelog(versionId: string) {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      const content = newVersion.changelog.trim();
+      const sourceUrl = newVersion.changelog_source_url.trim() || null;
+
+      const { data: existingRows, error: lookupError } = await supabase
+        .from("changelogs")
+        .select("id")
+        .eq("version_id", versionId)
+        .order("published_at", { ascending: false })
+        .limit(1);
+
+      if (lookupError) {
+        throw lookupError;
+      }
+
+      const existingId = existingRows?.[0]?.id;
+
+      if (!content) {
+        if (existingId) {
+          const { error: deleteError } = await supabase
+            .from("changelogs")
+            .delete()
+            .eq("version_id", versionId);
+
+          if (deleteError) {
+            throw deleteError;
+          }
+        }
+
+        return;
+      }
+
+      if (existingId) {
+        const { error: updateError } = await supabase
+          .from("changelogs")
+          .update({
+            content,
+            source_url: sourceUrl,
+          })
+          .eq("id", existingId);
+
+        if (updateError) {
+          throw updateError;
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from("changelogs")
+          .insert({
+            version_id: versionId,
+            content,
+            source_url: sourceUrl,
+          });
+
+        if (insertError) {
+          throw insertError;
+        }
+      }
+    }
+
     async function createVersion() {
       if (!supabase || !selectedAppForVersions) {
         setErrorMessage("No application selected.");
         return;
       }
-    
+
       if (
         !newVersion.version_name.trim() ||
         !newVersion.version_code.trim() ||
@@ -638,14 +712,14 @@ const [versionLoading, setVersionLoading] = useState(false);
         );
         return;
       }
-    
+
       const fileSize = Number(newVersion.file_size);
-    
+
       if (!Number.isFinite(fileSize) || fileSize < 0) {
         setErrorMessage("File size must be a valid positive number in MB.");
         return;
       }
-    
+
       if (!isValidHttpsUrl(newVersion.source_url)) {
         setErrorMessage("Source URL must be a valid HTTPS URL.");
         return;
@@ -656,48 +730,67 @@ const [versionLoading, setVersionLoading] = useState(false);
         return;
       }
 
+      if (!isValidHttpsUrl(newVersion.changelog_source_url)) {
+        setErrorMessage("Changelog Source URL must be a valid HTTPS URL.");
+        return;
+      }
+
       setVersionLoading(true);
       setErrorMessage("");
-    
+
       try {
-        const { error } = await supabase.from("versions").insert({
-          app_id: selectedAppForVersions.id,
-          version_name: newVersion.version_name.trim(),
-          version_code: newVersion.version_code.trim(),
-          release_date: newVersion.release_date,
-          min_android: newVersion.min_android.trim(),
-          target_android: newVersion.target_android.trim(),
-          architecture: newVersion.architecture.trim(),
-          file_size: Math.round(fileSize * 1024 * 1024),
-          sha256: newVersion.sha256.trim() || null,
-          source_url: newVersion.source_url.trim() || null,
-            custom_download_url: newVersion.custom_download_url.trim() || null,
+        const { data: createdVersion, error } = await supabase
+          .from("versions")
+          .insert({
+            app_id: selectedAppForVersions.id,
+            version_name: newVersion.version_name.trim(),
+            version_code: newVersion.version_code.trim(),
+            release_date: newVersion.release_date,
+            min_android: newVersion.min_android.trim(),
+            target_android: newVersion.target_android.trim(),
+            architecture: newVersion.architecture.trim(),
+            file_size: Math.round(fileSize * 1024 * 1024),
+            sha256: newVersion.sha256.trim() || null,
+            source_url: newVersion.source_url.trim() || null,
+            custom_download_url:
+              newVersion.custom_download_url.trim() || null,
             verified: newVersion.verified,
-        });
-    
-        if (error) {
+          })
+          .select("id")
+          .single();
+
+        if (error || !createdVersion) {
           console.error("Create version error:", error);
-          setErrorMessage(error.message);
+          setErrorMessage(
+            error?.message || "Unable to create version."
+          );
           return;
         }
-    
+
+        await saveVersionChangelog(createdVersion.id);
+
         cancelVersionForm();
         await loadVersions(selectedAppForVersions);
         await loadDashboard();
       } catch (error) {
         console.error("Create version error:", error);
-        setErrorMessage("Unable to create version.");
+
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to create version."
+        );
       } finally {
         setVersionLoading(false);
       }
     }
-    
+
     async function updateVersion() {
       if (!supabase || !selectedAppForVersions || !editingVersionId) {
         setErrorMessage("No version selected for editing.");
         return;
       }
-    
+
       if (
         !newVersion.version_name.trim() ||
         !newVersion.version_code.trim() ||
@@ -712,14 +805,14 @@ const [versionLoading, setVersionLoading] = useState(false);
         );
         return;
       }
-    
+
       const fileSize = Number(newVersion.file_size);
-    
+
       if (!Number.isFinite(fileSize) || fileSize < 0) {
         setErrorMessage("File size must be a valid positive number in MB.");
         return;
       }
-    
+
       if (!isValidHttpsUrl(newVersion.source_url)) {
         setErrorMessage("Source URL must be a valid HTTPS URL.");
         return;
@@ -730,9 +823,14 @@ const [versionLoading, setVersionLoading] = useState(false);
         return;
       }
 
+      if (!isValidHttpsUrl(newVersion.changelog_source_url)) {
+        setErrorMessage("Changelog Source URL must be a valid HTTPS URL.");
+        return;
+      }
+
       setVersionLoading(true);
       setErrorMessage("");
-    
+
       try {
         const { error } = await supabase
           .from("versions")
@@ -746,29 +844,36 @@ const [versionLoading, setVersionLoading] = useState(false);
             file_size: Math.round(fileSize * 1024 * 1024),
             sha256: newVersion.sha256.trim() || null,
             source_url: newVersion.source_url.trim() || null,
-            custom_download_url: newVersion.custom_download_url.trim() || null,
+            custom_download_url:
+              newVersion.custom_download_url.trim() || null,
             verified: newVersion.verified,
           })
           .eq("id", editingVersionId)
           .eq("app_id", selectedAppForVersions.id);
-    
+
         if (error) {
           console.error("Update version error:", error);
           setErrorMessage(error.message);
           return;
         }
-    
+
+        await saveVersionChangelog(editingVersionId);
+
         cancelVersionForm();
         await loadVersions(selectedAppForVersions);
         await loadDashboard();
       } catch (error) {
         console.error("Update version error:", error);
-        setErrorMessage("Unable to update version.");
+
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to update version."
+        );
       } finally {
         setVersionLoading(false);
       }
     }
-    
     async function deleteVersion(version: VersionItem) {
       if (!supabase || !selectedAppForVersions) {
         setErrorMessage("No application selected.");
@@ -2900,6 +3005,43 @@ const [versionLoading, setVersionLoading] = useState(false);
                   <small className="form-help">
                     Optional. This link will be used for the DroidZyra Download APK button.
                   </small>
+                </div>
+
+                <div className="form-field full-width">
+                  <label>Changelog / What's New</label>
+
+                  <textarea
+                    value={newVersion.changelog}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        changelog: e.target.value,
+                      })
+                    }
+                    rows={6}
+                    placeholder="Describe what changed in this version..."
+                  />
+
+                  <small>
+                    Optional. Add release notes, fixes, improvements or other changes.
+                  </small>
+                </div>
+
+                <div className="form-field full-width">
+                  <label>Changelog Source URL</label>
+
+                  <input
+                    type="url"
+                    value={newVersion.changelog_source_url}
+                    onChange={(e) =>
+                      setNewVersion({
+                        ...newVersion,
+                        changelog_source_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://example.com/release-notes"
+                  />
+                  <small>Optional source for the release notes.</small>
                 </div>
 
                 <div className="form-field full-width">
@@ -5218,6 +5360,8 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
 
 
 

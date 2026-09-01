@@ -186,6 +186,18 @@ export async function getApps(opts?: {
   };
 }
 
+function normalizeVersion(raw: any): Version {
+  return {
+    ...raw,
+    changelog: Array.isArray(raw?.changelog)
+      ? raw.changelog[0] ?? null
+      : raw?.changelog ?? null,
+  } as Version;
+}
+
+function normalizeVersions(raw: any[] | null | undefined): Version[] {
+  return (raw ?? []).map(normalizeVersion);
+}
 export async function getAppBySlug(
   slug: string
 ): Promise<AppDetail | null> {
@@ -236,7 +248,7 @@ export async function getAppBySlug(
         .order('created_at', { ascending: true }),
     ]);
 
-  const versions = (versionsRes.data as Version[]) ?? [];
+  const versions = normalizeVersions(versionsRes.data);
   const screenshots = (screenshotsRes.data as Screenshot[]) ?? [];
   const compatibility =
     (compatRes.data as CompatibilityRecord[]) ?? [];
@@ -278,7 +290,7 @@ export async function getLatestVersion(
 
   if (error || !data) return null;
 
-  return data as Version;
+  return normalizeVersion(data);
 }
 
 const getPopularAppsCached = unstable_cache(
@@ -414,7 +426,7 @@ export async function getVersionsForApp(
 
   return {
     app: app as App,
-    versions: (versions as Version[]) ?? [],
+    versions: normalizeVersions(versions),
   };
 }
 
@@ -461,7 +473,7 @@ export async function getVersionDetail(
 
   return {
     app: app as App,
-    version: version as Version,
+    version: normalizeVersion(version),
   };
 }
 
@@ -722,6 +734,8 @@ export async function getTrendingApps(
 ): Promise<App[]> {
   return getTrendingAppsCached(limit);
 }
+
+
 
 
 
