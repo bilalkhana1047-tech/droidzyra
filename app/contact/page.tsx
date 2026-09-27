@@ -88,7 +88,7 @@ export default function ContactPage() {
 
               <CardContent className="p-6 sm:p-7">
                 <form
-                  action="mailto:contact@droidzyra.app"
+                  action="mailto:Bilalkhana1047@gmail.com"
                   method="post"
                   encType="text/plain"
                   className="space-y-5"
@@ -223,10 +223,10 @@ export default function ContactPage() {
                   </p>
 
                   <a
-                    href="mailto:contact@droidzyra.app"
+                    href="mailto:Bilalkhana1047@gmail.com"
                     className="mt-4 inline-flex rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
                   >
-                    contact@droidzyra.app
+                    Bilalkhana1047@gmail.com
                   </a>
                 </CardContent>
               </Card>
@@ -254,3 +254,5 @@ export default function ContactPage() {
     </main>
   );
 }
+
+
