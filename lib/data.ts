@@ -25,14 +25,18 @@ const getCategoriesCached = unstable_cache(
 
     if (error) return [];
 
-    return data as Category[];
+    return (data as Category[]).filter((category) => category.slug !== 'casino');
   },
   ['droidzyra-categories'],
   { revalidate: 60 }
 );
 
 export async function getCategories(): Promise<Category[]> {
-  return getCategoriesCached();
+  const categories = await getCategoriesCached();
+
+  return categories.filter(
+    (category) => category.slug.toLowerCase() !== 'casino'
+  );
 }
 
 async function attachLatestVersions(apps: App[]): Promise<App[]> {
@@ -99,8 +103,9 @@ export async function getApps(opts?: {
 
   let query = supabase
     .from('apps')
-    .select('*, category:categories(*)', { count: 'exact' })
-    .eq('status', 'active');
+    .select('*, category:categories!inner(*)', { count: 'exact' })
+    .eq('status', 'active')
+    .neq('category.slug', 'casino');
 
   if (opts?.search?.trim()) {
     const search = opts.search.trim();
@@ -734,6 +739,7 @@ export async function getTrendingApps(
 ): Promise<App[]> {
   return getTrendingAppsCached(limit);
 }
+
 
 
 

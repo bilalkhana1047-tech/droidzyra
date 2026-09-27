@@ -24,11 +24,11 @@ export const siteConfig = {
   ],
 
   socials: {
-    facebook: "https://www.facebook.com/",
-    instagram: "https://www.instagram.com/",
-    youtube: "https://www.youtube.com/",
-    twitter: "https://x.com/",
-    pinterest: "https://www.pinterest.com/",
+    facebook: "https://www.facebook.com/61594780535479/",
+    instagram: "https://www.instagram.com/droidzyra/",
+    youtube: "https://www.youtube.com/@divinecreations_ai",
+    twitter: "https://x.com/DroidZyra",
+    pinterest: "https://in.pinterest.com/droidzyra/",
   },
 
   footerLinks: [
