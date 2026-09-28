@@ -7,6 +7,21 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, androidVersionName } from '@/lib/format';
 
+function getPlainTextPreview(value: string | null | undefined) {
+  if (!value) return 'No description available.';
+
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function AppCard({ app, className }: { app: App; className?: string }) {
   const latest = app.latest_version;
   const recent = false;
@@ -33,7 +48,7 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
         </div>
 
         <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-          {app.description ?? 'No description available.'}
+          {getPlainTextPreview(app.description)}
         </p>
 
         <div className="mt-4 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -84,5 +99,6 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
 }
 
 export { androidVersionName };
+
 
 

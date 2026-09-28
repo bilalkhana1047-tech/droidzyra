@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import "./admin-theme.css";
+import RichTextEditor from '@/components/RichTextEditor';
 
 type DashboardStats = {
   activeApps: number;
@@ -2185,17 +2185,15 @@ const [versionLoading, setVersionLoading] = useState(false);
               <div className="form-field full-width">
                 <label>About / Long Description</label>
 
-                <textarea
+                <RichTextEditor
                   value={newApp.description}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setNewApp({
                       ...newApp,
-                      description: e.target.value,
+                      description: value,
                     })
                   }
-                  placeholder="Detailed original app description..."
-                  rows={8}
-                />
+/>
               </div>
 
               <div className="form-field full-width">
@@ -5360,6 +5358,8 @@ const [versionLoading, setVersionLoading] = useState(false);
     </div>
   );
 }
+
+
 
 
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import createDOMPurify from "dompurify";
 import { useLanguage } from "@/components/i18n/language-provider";
 import type { AppInternalLink } from "@/lib/types";
 
@@ -22,6 +23,24 @@ type TranslatedAppContent = {
   editorialNotes: string;
 };
 
+function looksLikeHtml(value: string) {
+  return /<\/?[a-z][\s\S]*>/i.test(value);
+}
+
+function sanitizeHtml(value: string) {
+  if (typeof window === "undefined") {
+    return value;
+  }
+
+  const DOMPurify = createDOMPurify(window);
+
+  return DOMPurify.sanitize(value, {
+    USE_PROFILES: {
+      html: true,
+    },
+  });
+}
+
 export function AppTranslatedContent({
   shortDescription,
   description,
@@ -31,6 +50,7 @@ export function AppTranslatedContent({
   section,
 }: AppTranslatedContentProps) {
   const { languageCode, translateMany } = useLanguage();
+
   function renderLinkedText(
     text: string,
     placement: "description" | "editorial_notes"
@@ -177,8 +197,16 @@ export function AppTranslatedContent({
         return;
       }
 
+      const translationSource = sourceTexts.map((value, index) => {
+        if (index === 1 && looksLikeHtml(value)) {
+          return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+        }
+
+        return value;
+      });
+
       const translated =
-        await translateMany(sourceTexts);
+        await translateMany(translationSource);
 
       if (!cancelled) {
         setContent(buildContent(translated));
@@ -197,32 +225,49 @@ export function AppTranslatedContent({
       <>
         {(shortDescription || description) && (
           <div>
-          {shortDescription && (
-            <p className="text-base font-medium leading-7 text-foreground">
-              {content.shortDescription}
-            </p>
-          )}
+            {shortDescription && (
+              <p className="text-base font-medium leading-7 text-foreground">
+                {content.shortDescription}
+              </p>
+            )}
 
-          {description && (
-            <div
-              className={
-                shortDescription
-                  ? "mt-4 whitespace-pre-line text-muted-foreground leading-7"
-                  : "whitespace-pre-line text-muted-foreground leading-7"
-              }
-            >
-              {renderLinkedText(content.description, "description")}
-            </div>
-          )}
-        </div>
-      )}
+            {description && (
+              <>
+                {looksLikeHtml(content.description) ? (
+                  <div
+                    className={
+                      shortDescription
+                        ? "rich-text-content mt-4 text-muted-foreground leading-7"
+                        : "rich-text-content text-muted-foreground leading-7"
+                    }
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(content.description),
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={
+                      shortDescription
+                        ? "mt-4 whitespace-pre-line text-muted-foreground leading-7"
+                        : "whitespace-pre-line text-muted-foreground leading-7"
+                    }
+                  >
+                    {renderLinkedText(
+                      content.description,
+                      "description"
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-      {!shortDescription && !description && (
-        <p className="text-muted-foreground leading-7">
-          No description available.
-        </p>
-      )}
-
+        {!shortDescription && !description && (
+          <p className="text-muted-foreground leading-7">
+            No description available.
+          </p>
+        )}
       </>
     );
   }
@@ -230,20 +275,20 @@ export function AppTranslatedContent({
   if (section === "features") {
     return featureList.length > 0 ? (
       <div className="grid gap-3 sm:grid-cols-2">
-          {content.features.map((feature, index) => (
-            <div
-              key={`${index}-${feature}`}
-              className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-4"
-            >
-              <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                ✓
-              </span>
+        {content.features.map((feature, index) => (
+          <div
+            key={`${index}-${feature}`}
+            className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-4"
+          >
+            <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              ✓
+            </span>
 
-              <span className="text-sm leading-6 text-muted-foreground">
-                {feature}
-              </span>
-            </div>
-          ))}
+            <span className="text-sm leading-6 text-muted-foreground">
+              {feature}
+            </span>
+          </div>
+        ))}
       </div>
     ) : null;
   }
@@ -251,20 +296,14 @@ export function AppTranslatedContent({
   if (section === "notes") {
     return editorialNotes?.trim() ? (
       <div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
-        {renderLinkedText(content.editorialNotes, "editorial_notes")}
+        {renderLinkedText(
+          content.editorialNotes,
+          "editorial_notes"
+        )}
       </div>
     ) : null;
   }
 
   return null;
 }
-
-
-
-
-
-
-
-
-
 

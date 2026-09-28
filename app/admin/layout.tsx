@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./admin-theme.css";
 
 export const metadata: Metadata = {
   title: "DroidZyra Admin",
@@ -18,3 +19,4 @@ export default function AdminLayout({
 }) {
   return children;
 }
+
